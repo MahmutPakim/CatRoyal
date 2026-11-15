@@ -1,0 +1,24 @@
+{
+  "kimlik": 2,
+  "surum": 1,
+  "genislik": 8,
+  "yukseklik": 8,
+  "hamle": 24,
+  "renkler": 4,
+  "engeller": {
+    "kb": { "arketip": "katmanli_blok", "hedefTuru": "katmanli_blok", "tanitim": 2 }
+  },
+  "hucreler": [
+    "?    ?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?    ?",
+    "?    kb:1 ?    ?    ?    ?    kb:1 ?",
+    "?    kb:1 kb:2 ?    ?    kb:2 kb:1 ?",
+    "?    ?    kb:2 kb:1 kb:1 kb:2 ?    ?",
+    "?    ?    ?    ?    ?    ?    ?    ?"
+  ],
+  "hedefler": [
+    { "tur": "katmanli_blok", "adet": 0 }
+  ]
+}

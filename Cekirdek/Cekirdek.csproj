@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Saf C# çekirdek: Unity'ye bağımlılık yok (GDD 0.4). Unity 2021.3+ netstandard2.1 kitaplıklarını doğrudan kullanır. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CatRoyal.Cekirdek</RootNamespace>
+    <AssemblyName>CatRoyal.Cekirdek</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

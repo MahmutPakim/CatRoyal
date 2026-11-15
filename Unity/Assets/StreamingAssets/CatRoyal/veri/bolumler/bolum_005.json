@@ -1,0 +1,27 @@
+{
+  "kimlik": 5,
+  "surum": 1,
+  "genislik": 7,
+  "yukseklik": 9,
+  "hamle": 28,
+  "renkler": 4,
+  "engeller": {
+    "tp": { "arketip": "toplanabilir", "hedefTuru": "toplanabilir" },
+    "dk": { "arketip": "dusen_kirilabilir" },
+    "sb": { "arketip": "sert_blok" }
+  },
+  "hucreler": [
+    "?    tp:1 ?    ?    ?    tp:1 ?",
+    "?    ?    ?    tp:1 ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    dk:1 ?    ?    ?    dk:1 ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    dk:2 ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "sb:2 ?    ?    ?    ?    ?    sb:2"
+  ],
+  "hedefler": [
+    { "tur": "toplanabilir", "adet": 3 }
+  ]
+}

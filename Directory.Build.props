@@ -1,0 +1,10 @@
+<Project>
+  <!--
+    Derleme çıktıları proje klasörlerinin dışında tutulur. Cekirdek klasörü aynı zamanda Unity'nin yerel paketi
+    olduğu için içinde bin/ ve obj/ bulunursa Unity oradaki üretilmiş dosyaları da derlemeye çalışır.
+  -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory).yapi/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory).yapi/bin/$(MSBuildProjectName)/</BaseOutputPath>
+  </PropertyGroup>
+</Project>

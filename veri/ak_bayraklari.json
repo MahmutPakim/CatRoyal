@@ -1,0 +1,21 @@
+{
+  "kaskad_dogum_hucresi": "A",
+  "hamle_bitti_akisi": "A",
+  "capraz_kayma_kosulu": "A",
+  "girissiz_sutun_dolumu": "A",
+  "gudumlu_hedef_secimi": "A",
+  "esit_oncelik_secimi": "A",
+  "renk_gudumlu_ek_tas": "A",
+  "renk_esitlik_secimi": "A",
+  "renk_kuresi_zincir_secimi": "A",
+  "uzatma_adimi": "A",
+  "yan_hasar_vurus_sayisi": "A",
+  "bomba_bomba_merkezi": "A",
+  "karistirma_basarisizligi": "A",
+  "cift_renk_gecisi": "A",
+  "cift_renk_kombinasyon": "A",
+
+  "karistirma_renk_degisimi": true,
+  "cizgi_oynanmayan_hucrede_durur": false,
+  "dusme_sirasinda_hamle": true
+}

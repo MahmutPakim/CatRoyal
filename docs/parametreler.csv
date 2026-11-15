@@ -1,0 +1,246 @@
+ad,tur,açıklama,öneri_varsayılan,aralık,birim,güven_notu,gdd_bölümü
+sunum_cizgi_ilerleme_hizi,denge,Çizgi taşı kanatlarının hücre hücre ilerleme hızı,25,10–40,hücre/sn,"Sunum katmanı, çekirdek mantığı etkilemez.",3.2.3
+sunum_bomba_baslangic_gecikmesi,denge,Bomba taşı etkinleştikten sonra ilk halkanın patlamasına kadar geçen süre,0.08,0–0.3,sn,"Sunum katmanı, çekirdek mantığı etkilemez.",3.3.2
+sunum_bomba_halka_arasi,denge,Bomba patlamasında bir halkadan sonrakine geçiş süresi,0.03,0–0.1,sn,"Sunum katmanı, çekirdek mantığı etkilemez.","3.3.2, 4.3.3"
+gudumlu_puan_hedef_oge,mekanik,Güdümlü taş hedef seçiminde bölüm hedefi olan öğenin taban puanı,100,50–200,puan,"Orta; sıralamanın varlığı kesin, değerler kendi tasarımın (AK-05 A). Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",3.4.5
+gudumlu_puan_engel,mekanik,Hedef olmayan bir engelin taban puanı,40,10–80,puan,"Orta; AK-05 A. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",3.4.5
+gudumlu_puan_katman_basina,mekanik,Engelde kalan her katman için eklenen puan,10,0–30,puan,"Düşük; kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",3.4.5
+gudumlu_puan_normal_tas,mekanik,Normal bir taşın puanı,1,0–5,puan,"Orta; normal taşın en düşük öncelikte olduğu kesin. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",3.4.5
+sunum_renk_isin_araligi,denge,Renk küresinin ardışık iki ışını arasındaki süre,0.04,0.01–0.1,sn,"Sunum katmanı, çekirdek mantığı etkilemez.",3.5.4
+sunum_renk_kuresi_tetik_beklemesi,denge,Zincirle vurulan renk küresinin görsel bekleme animasyonu,0.3,0.1–0.8,sn,Sunum katmanı; sonucu etkilemez; sıra AK-09 ile belirlenir.,"0.4, 3.5.3"
+sunum_cift_renk_gecis_suresi,denge,Çift renk küresinin ikinci renge geçerken oynattığı renk değiştirme animasyonu,1.0,0.5–2.0,sn,Sunum katmanı; sonucu etkilemez; sıra AK-14 ile belirlenir.,"0.4, 3.6.4"
+cift_renk_seri_esigi,denge,Çift renk takviyesini kazandıran art arda galibiyet sayısı,3,2–5,galibiyet,"Orta; kazanma serisine bağlı olduğu biliniyor, eşik kendi tasarımın.","3.6.7, 9.3.8"
+acilis_cift_renk_takviyesi,denge,Çift renk takviyesinin açıldığı ilerleme bölümü,110,60–200,bölüm,Yüksek (kapının varlığı); değer kendi tasarımın.,"3.6.7, 9.3.8, 9.4"
+acilis_dolum_gostergesi,denge,Dolum göstergesinin açıldığı ilerleme bölümü,300,150–500,bölüm,Yüksek (kapının varlığı); değer kendi tasarımın.,"3.7.1, 9.4"
+dolum_kapasitesi,denge,Dolum göstergesinin dolması için gereken toplam puan,100,50–200,puan,"Kendi tasarımın; yapı kesin, değer serbest.",3.7.2
+dolum_puan_cizgi,denge,Bir çizgi taşı patlamasının göstergeye kattığı puan,5,1–15,puan,Kendi tasarımın.,3.7.2
+dolum_puan_bomba,denge,Bir bomba taşı patlamasının göstergeye kattığı puan,7,1–15,puan,Kendi tasarımın.,3.7.2
+dolum_puan_gudumlu,denge,Bir güdümlü taş patlamasının göstergeye kattığı puan,4,1–15,puan,Kendi tasarımın.,3.7.2
+dolum_puan_renk_tas_basina,denge,Renk küresinin vurduğu her taş için göstergeye eklenen puan,1,0.5–3,puan,Kendi tasarımın.,3.7.2
+dolum_puan_kombinasyon,denge,Bir kombinasyonun göstergeye kattığı puan (her kombinasyon türüne ayrı değer verilebilir),15,5–40,puan,Kendi tasarımın; türe göre ayrı puan yapısı kesin.,3.7.2
+dolum_puan_renk_renk,denge,Renk küresi + renk küresi kombinasyonunun puanı (çift renk modunda ayrı değer),40,20–100,puan,Kendi tasarımın.,3.7.2
+yedek_hamle_seri_esigi,denge,Yedek hamle hakkını kazandıran art arda galibiyet sayısı,3,2–6,galibiyet,"Orta; seriye bağlılık biliniyor, eşik kendi tasarımın.",3.8.1
+acilis_yedek_hamle_hakki,denge,Yedek hamle hakkının açıldığı ilerleme bölümü,300,150–500,bölüm,Yüksek (kapının varlığı); değer kendi tasarımın.,"3.8.1, 9.4"
+yedek_hamle_esigi,denge,Yedek hamle hakkının ek hamle gönderdiği kalan hamle sayısı,0,0–3,hamle,Belirsiz; kendi tasarımın (AK-02).,3.8.2
+yedek_hamle_sayisi,denge,Yedek hamle hakkının gönderdiği ek hamle,3,2–5,hamle,Belirsiz; kendi tasarımın.,3.8.2
+sunum_renk_cizgi_patlama_arasi,denge,Renk küresi + çizgi kombinasyonunda dönüşen çizgi taşlarının ardışık etkinleşme aralığı,0.12,0.05–0.4,sn,"Sunum katmanı, çekirdek mantığı etkilemez.",4.3.7
+sunum_renk_bomba_beklemesi,denge,Renk küresi + bomba kombinasyonunda dönüşümden sonra patlamaya kadar bekleme,0.4,0.2–1.0,sn,"Sunum katmanı, çekirdek mantığı etkilemez.",4.3.8
+sunum_renk_gudumlu_kalkis_arasi,denge,Renk küresi + güdümlü kombinasyonunda ardışık iki güdümlü taşın kalkış aralığı,0.05,0.03–0.2,sn,"Sunum katmanı, çekirdek mantığı etkilemez.",4.3.9
+sunum_tahta_temizleme_halka_arasi,denge,Renk küresi + renk küresi kombinasyonunda halkalar arasındaki süre,0.06,0.02–0.15,sn,"Sunum katmanı, çekirdek mantığı etkilemez.","4.3.10, 4.4.2"
+sunum_dusme_ivmesi,denge,Düşen taşın hız artışı,40,20–80,hücre/sn²,"Sunum katmanı, çekirdek mantığı etkilemez.",5.1.4
+sunum_dusme_azami_hizi,denge,Düşen taşın ulaşabileceği en yüksek hız,15,8–25,hücre/sn,"Sunum katmanı, çekirdek mantığı etkilemez.",5.1.4
+ayarli_dolgu_siki_olasiligi,mekanik,Set yolundan gelen dolguda sıkı düzeyin seçilme olasılığı; zorluk arttıkça düşürülür,0.35,0–1,olasılık,"Belirsiz; olasılıklar kendi tasarımın. Zorluk etiketine göre ayrı değer verilebilir. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",5.3.6
+karistirma_deneme_sayisi,mekanik,Olası hamle kalmadığında yapılan azami yer değiştirme denemesi,20,5–50,deneme,"Kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",5.6.2
+sunum_ipucu_bekleme_suresi,denge,Oyuncu hamle yapmazsa ipucunun gösterilmesine kadar geçen süre,5,3–10,sn,"Sunum katmanı, çekirdek mantığı etkilemez.",5.8.2
+uretici_yayilma_hucre_sayisi,mekanik,Üretici engel kırılınca çevresine bıraktığı kaplama ya da zemin hücresi sayısı,3,1–8,hücre,"Orta; davranış kesin, sayı kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",6.3.2
+tehlike_yayilma_sayisi,mekanik,Patlayan bir yayılan tehlike hücresinin çevresine fırlattığı yeni tehlike sayısı,2,1–4,hücre,"Orta; davranış kesin, sayı kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",6.3.3
+tahta_genislik_standart,mekanik,Standart tahtanın sütun sayısı; aynı zamanda genişliğin üst sınırı,9,8–9,sütun,Mekanik kural değeri; analizdeki kurala sadık (yuvarlanmadı).,"2.1.1, 8.1.1"
+tahta_yukseklik_standart,mekanik,Standart tahtanın satır sayısı,11,8–11,satır,Mekanik kural değeri; analizdeki kurala sadık (yuvarlanmadı).,"2.1.1, 8.1.1"
+kaydirmali_tahta_yukseklik,denge,Çok ekranlı bölümlerde toplam tahta yüksekliği,28,20–40,satır,Yüksek (desen); değer kendi tasarımın.,8.1.3
+oynanmayan_hucre_payi,denge,Bölüm başına ortalama oynanmayan hücre payı,0.12,0.0–25,oran,Yüksek (desen); değer kendi tasarımın.,8.1.4
+bos_baslayan_hucre_payi_erken,denge,İlk bölümlerde boş başlayan hücre payı (geçiş: erken_donem_sonu),0.04,0.0–10,oran,Yüksek (desen); değer kendi tasarımın.,8.1.5
+bos_baslayan_hucre_payi,denge,Sonraki bölümlerde boş başlayan hücre payı,0.01,0.0–3,oran,Yüksek (desen); değer kendi tasarımın.,8.1.5
+renk_sayisi_standart,mekanik,Standart bölümde kullanılan renk sayısı,4,2–5,renk,Mekanik kural değeri; analizdeki kurala sadık (yuvarlanmadı).,"2.2.2, 8.2.1"
+hamle_bandi_alt,denge,Normal bölümlerde hamle bandının alt ucu,18,15–22,hamle,Yüksek (dar bant deseni); değer kendi tasarımın.,8.3.1
+hamle_bandi_ust,denge,Normal bölümlerde hamle bandının üst ucu,35,30–45,hamle,Yüksek (desen); değer kendi tasarımın.,8.3.1
+asgari_hamle,denge,İstisnalar dışında bölümlerin inmediği hamle tabanı,18,15–22,hamle,"Orta; tabanın varlığı biliniyor, değer kendi tasarımın.",8.3.2
+hamle_ortalama_erken,denge,Erken dönemde ortalama hamle sayısı,27,24–30,hamle,Yüksek (azalma deseni); değer kendi tasarımın.,8.3.3
+hamle_ortalama_gec,denge,Geç dönemde ortalama hamle sayısı,22,20–25,hamle,Yüksek (azalma deseni); değer kendi tasarımın.,8.3.3
+zorluk_kirilma_bolumu,denge,Ortalama hamle sayısının belirgin düştüğü bölüm,2500,1500–4000,bölüm,"Orta; kırılmanın varlığı gözlendi, yeri kendi tasarımın.",8.3.3
+hedef_hamle_orani_erken,denge,Erken dönemde hedef adedi / hamle oranı (geçiş: zorluk_kirilma_bolumu),2.5,2.0–3.0,oran,Orta (kaba gösterge); değer kendi tasarımın.,8.3.4
+hedef_hamle_orani_gec,denge,Geç dönemde hedef adedi / hamle oranı,3.2,2.8–4.0,oran,Orta (kaba gösterge); değer kendi tasarımın.,8.3.4
+engel_yogunlugu,denge,Oynanabilir hücrelerin engel taşıyan payı,0.6,0.4–75,oran,Yüksek (sabit tutulma deseni); değer kendi tasarımın.,8.3.5
+ekran_azami_hedef,mekanik,Bir ekranda aynı anda gösterilen en fazla hedef türü,4,4,hedef,Mekanik kural değeri; analizdeki kurala sadık (yuvarlanmadı).,8.4.1
+bolum_azami_engel_turu,denge,Bir bölümde aynı anda kullanılan en fazla engel türü,4,2–6,tür,Düşük; kendi tasarımın.,8.5.2
+tanitim_araligi_erken,denge,Erken dönemde iki yeni engel tanıtımı arasındaki bölüm sayısı,8,5–12,bölüm,Yüksek (düzenli aralık deseni); değer kendi tasarımın.,8.6.1
+erken_donem_sonu,denge,Erken tanıtım ritminin bittiği bölüm,80,50–150,bölüm,Yüksek (desen); değer kendi tasarımın.,8.6.1
+tanitim_blogu_orta,denge,Orta dönemde yeni mekaniklerin geldiği blok uzunluğu (tanıtım bloğun ilk bölümünde),40,25–100,bölüm,Yüksek (blok başı deseni); değer kendi tasarımın.,8.6.3
+tanitim_araligi_gec,denge,Geç dönemde iki tanıtım arasındaki ortalama bölüm sayısı,150,100–250,bölüm,Yüksek (seyrekleşme deseni); değer kendi tasarımın.,8.6.3
+acilis_bonus_bolumleri,denge,Bonus bölümlerinin başladığı bölüm,25,15–40,bölüm,Yüksek (desen); değer kendi tasarımın.,"8.7.3, 9.4"
+bonus_araligi_erken,denge,Erken dönemde iki bonus bölümü arası,25,15–40,bölüm,Yüksek (desen); değer kendi tasarımın.,8.7.1
+bonus_araligi_gec,denge,Geç dönemde iki bonus bölümü arası,120,80–200,bölüm,Yüksek (desen); değer kendi tasarımın.,8.7.1
+zor_bolum_araligi,denge,Zor bölüm ritminin blok uzunluğu (bloğun son bölümü zor),8,5–15,bölüm,"Orta; ritim gözlendi, etiketle ilişkisi doğrulanmadı.",8.8.3
+zor_bolum_hamle_farki,denge,Zor bölümün aynı bloktaki diğerlerinden eksik verdiği ortalama hamle,3,1–5,hamle,Orta; değer kendi tasarımın.,8.8.3
+acilis_cok_ekranli,denge,Çok ekranlı bölümlerin ilk göründüğü bölüm,2500,1000–4000,bölüm,Yüksek (geç tanıtım deseni); değer kendi tasarımın.,8.9.4
+bolum_paketi_uzunlugu,denge,Bir bölüm paketindeki bölüm sayısı,50,25–200,bölüm,Yüksek (paketleme deseni); değer kendi tasarımın.,8.11.2
+azami_can,denge,Standart oyuncunun azami can sayısı,6,4–8,can,Yüksek (sabit azami can yapısı); değer kendi tasarımın.,9.1.1
+azami_can_premium,denge,Sezon hattında premium hat sahibinin azami can sayısı,10,9–14,can,Yüksek (premium artışı); değer kendi tasarımın. azami_can değerinden en az 2 fazla olmalı.,"9.1.1, 9.8.9"
+can_dolum_suresi_dk,denge,Bir canın dolma süresi,20,15–40,dakika,Yüksek (sabit süre yapısı); değer kendi tasarımın.,9.1.4
+can_dolum_teklifi_fiyati,denge,Canları tamamen dolduran teklifin fiyatı,1000,500–2000,para,"Sunucu tarafı, kendi tasarımın.",9.1.6
+gelen_kutusu_azami,denge,Gelen kutusunun alabileceği azami mesaj,20,10–50,mesaj,Yüksek (sınır var); değer kendi tasarımın.,9.1.8
+hediye_sinirsiz_can_dk,denge,Ödül olarak verilen varsayılan sınırsız can süresi,60,15–120,dakika,Yüksek; değer kendi tasarımın.,9.1.9
+can_istek_araligi_saat,denge,Takımdan iki can isteği arasındaki bekleme,4,1–8,saat,"Sunucu tarafı, kendi tasarımın.","9.1.10, 10.7.3"
+baslangic_parasi,denge,Yeni oyuncunun başlangıç parası,1500,500–3000,para,Yüksek; değer kendi tasarımın.,9.2.1
+kazanma_parasi_normal,denge,Normal etiketli bölüm kazanınca verilen para,20,5–50,para,Orta (etikete bağlı ödül yapısı); değer kendi tasarımın.,9.2.2
+kazanma_parasi_zor,denge,Zor etiketli bölüm kazanınca verilen para,60,30–150,para,Orta; değer kendi tasarımın.,9.2.2
+kazanma_parasi_cok_zor,denge,Çok zor etiketli bölüm kazanınca verilen para,100,50–200,para,Orta; değer kendi tasarımın.,9.2.2
+kazanma_parasi_asiri_zor,denge,Aşırı zor etiketli bölüm kazanınca verilen para,150,80–300,para,Orta; değer kendi tasarımın.,9.2.2
+kalan_hamle_basina_para,denge,Kazanınca kalan her hamle için verilen para,2,0–5,para,Orta; değer kendi tasarımın.,"7.6.1, 9.2.2"
+can_yardim_odulu,denge,Takım arkadaşının can isteğine yardım edene verilen para,10,0–20,para,Orta; değer kendi tasarımın.,"9.2.3, 10.7.3"
+hesap_baglama_odulu,denge,Sosyal hesap bağlama ödülü,200,0–500,para,Yüksek; değer kendi tasarımın.,"9.2.3, 9.15.2"
+takim_kurma_bedeli,denge,Yeni takım kurmanın bedeli,150,0–500,para,Yüksek; değer kendi tasarımın.,"9.2.4, 10.7.2"
+carpan_bileti_fiyati,denge,Çarpan biletinin fiyatı,8000,4000–15000,para,Yüksek; değer kendi tasarımın.,"9.2.4, 9.10.4"
+carpan_bileti_kati,denge,Çarpan biletinin uyguladığı kat,3,2–4,kat,Orta; değer kendi tasarımın.,9.10.4
+etkinlik_carpani_suresi_dk,denge,Ödül olarak verilen etkinlik çarpanının varsayılan süresi,20,10–60,dakika,Orta; değer kendi tasarımın.,9.10.4
+fiyat_cizgi,denge,Başlangıç takviyesi çizgi taşının fiyatı (normal düzey),800,400–1500,para,Yüksek (fiyat yapısı); değer kendi tasarımın.,9.3.7
+fiyat_bomba,denge,Başlangıç takviyesi bomba taşının fiyatı,1200,600–2000,para,Yüksek; değer kendi tasarımın.,9.3.7
+fiyat_renk_kuresi,denge,Başlangıç takviyesi renk küresinin fiyatı,1600,800–2500,para,Yüksek; değer kendi tasarımın.,9.3.7
+fiyat_tek_hucre,denge,Tek hücre aracının fiyatı,1500,800–2500,para,Yüksek; değer kendi tasarımın.,9.3.7
+fiyat_karistirma,denge,Karıştırma aracının fiyatı,1400,800–2500,para,Yüksek; değer kendi tasarımın.,9.3.7
+fiyat_satir,denge,Satır aracının fiyatı,3000,1500–5000,para,Yüksek; değer kendi tasarımın.,9.3.7
+fiyat_sutun,denge,Sütun aracının fiyatı,3000,1500–5000,para,Yüksek; değer kendi tasarımın.,9.3.7
+yuksek_fiyat_carpani,denge,Yüksek fiyat düzeyindeki oyuncular için fiyat çarpanı (takviye ve ek hamle),1.5,1.2–2.0,kat,Yüksek (iki düzey var); çarpan biçimi kendi tasarımın.,"9.3.7, 9.12.2"
+acilis_baslangic_takviyeleri,denge,Başlangıç takviyelerinin açıldığı bölüm,3,2–10,bölüm,Yüksek (kapı var); değer kendi tasarımın.,"9.3.5, 9.4"
+acilis_tek_hucre_araci,denge,Tek hücre aracının açıldığı bölüm,11,6–15,bölüm,Yüksek; değer kendi tasarımın.,"9.3.5, 9.4"
+acilis_satir_araci,denge,Satır aracının açıldığı bölüm,10,9–16,bölüm,Yüksek; değer kendi tasarımın.,"9.3.5, 9.4"
+acilis_sutun_araci,denge,Sütun aracının açıldığı bölüm,12,9–20,bölüm,Yüksek; değer kendi tasarımın.,"9.3.5, 9.4"
+acilis_karistirma_araci,denge,Karıştırma aracının açıldığı bölüm,16,12–25,bölüm,Yüksek; değer kendi tasarımın.,"9.3.5, 9.4"
+takviye_azami_adet,denge,Envanterde takviye başına azami adet,999,99–9999,adet,Orta; değer kendi tasarımın.,9.3.10
+acilis_seri_takviyesi,denge,Seri takviyesinin açıldığı bölüm,27,15–50,bölüm,Yüksek (kapı var); değer kendi tasarımın.,"9.3.9, 9.4"
+seri_takviyesi_azami,denge,Seri takviyesinin ulaşabileceği azami kademe,4,2–5,kademe,Düşük; kendi tasarımın.,9.3.9
+acilis_olay_simgeleri,denge,Ana ekranda olay simgelerinin görünmeye başladığı bölüm,2,1–8,bölüm,Yüksek; değer kendi tasarımın.,9.4.3
+kismi_kilit_onizleme,denge,Deney grubunda olay simgesinin açılıştan kaç bölüm önce kilitli görüneceği,3,0–6,bölüm,Orta; değer kendi tasarımın.,9.4.4
+seviye_oncesi_azami_olay,denge,Bölüm öncesi ekranında aynı anda gösterilen azami olay,2,1–4,olay,Yüksek; değer kendi tasarımın.,9.4.6
+ikinci_olay_asgari_sure_dk,denge,Bir olaydayken ikinci bir olaya katılmak için ilk olayın bitimine kalması gereken asgari süre,45,15–90,dakika,Orta; değer kendi tasarımın.,9.4.7
+acilis_alan_penceresi,denge,Alan penceresinin bir kez kendiliğinden açıldığı bölüm,14,5–20,bölüm,Yüksek; değer kendi tasarımın.,"9.6.6, 9.4"
+acilis_karsilama_hediyesi,denge,Geri dönen oyuncu hediyesinin açıldığı bölüm,25,10–40,bölüm,Yüksek; değer kendi tasarımın.,"9.15.1, 9.4"
+acilis_gunluk_odul,denge,Günlük ödülün açıldığı bölüm,24,10–35,bölüm,Yüksek; değer kendi tasarımın.,"9.5.1, 9.4"
+acilis_kademeli_teklif,denge,Kademeli teklifin açıldığı bölüm,40,25–60,bölüm,Yüksek; değer kendi tasarımın.,"9.14.2, 9.4"
+acilis_carpan_bileti,denge,Çarpan biletinin açıldığı bölüm,38,25–60,bölüm,Yüksek; değer kendi tasarımın.,9.4
+acilis_carpan_secimi,denge,Bölüm öncesi çarpan seçiminin açıldığı bölüm,50,35–70,bölüm,Yüksek; değer kendi tasarımın.,"9.10.5, 9.4"
+acilis_liderlik_tablosu,denge,Haftalık liderlik tablosunun açıldığı bölüm,55,40–80,bölüm,Yüksek; değer kendi tasarımın.,"9.15.3, 9.4"
+acilis_arkadas_daveti,denge,Arkadaş davetinin açıldığı bölüm,90,60–120,bölüm,Yüksek; değer kendi tasarımın.,"9.15.3, 9.4"
+acilis_magaza,denge,Para mağazası ve dönemsel tekliflerin açıldığı bölüm,120,80–150,bölüm,Yüksek; değer kendi tasarımın.,"9.14.1, 9.4"
+magaza_urun_sayisi,denge,Para mağazasında gösterilen ürün sayısı,5,4–8,ürün,Orta; değer kendi tasarımın.,9.14.1
+acilis_gorevler,denge,Görevlerin ve ileri bölüm türlerinin açıldığı bölüm,120,100–160,bölüm,Yüksek; değer kendi tasarımın.,"9.15.3, 9.4"
+acilis_yarismali_bolumler,denge,Yarışmalı bölümlerin açıldığı bölüm,800,500–1500,bölüm,Yüksek; değer kendi tasarımın.,"9.11.2, 9.4"
+gun_siniri_saati,denge,Günlük sıfırlamanın yapıldığı sunucu saati,00:00,00:00–12:00,saat (UTC),Yüksek (sabit kaydırmalı gün sınırı); değer kendi tasarımın.,9.5.4
+haftalik_seri_uzunlugu,denge,Haftalık serinin uzunluğu,7,7,gün,Takvim haftası; ayar değeri değil.,9.5.5
+aylik_seri_uzunlugu,denge,Aylık serinin uzunluğu,28,28–31,gün,Yüksek (ayrı aylık seri); değer kendi tasarımın.,9.5.5
+haftalik_set_sayisi,denge,Sırayla dönen haftalık ödül seti sayısı,3,2–4,set,Orta; değer kendi tasarımın.,9.5.6
+hile_toleransi_dk,denge,Saat hilesi tespitinde tolerans,10,5–30,dakika,Yüksek; değer kendi tasarımın.,9.5.8
+gunluk_odul_icerikleri,denge,Günlük ödül içeriği önerisi,1.–6. gün: 50–150 para ya da 1 araç; 7. gün: 300 para ve 1 başlangıç takviyesi seti,gün başına para 20–300; takviye adedi 0–2,ödül paketi,"Sunucu tarafı, kendi tasarımın.",9.5.9
+bolum_basina_yildiz,denge,Bölüm kazanınca verilen yıldız,1,1–3,yıldız,Belirsiz; kendi tasarımın.,9.6.1
+alan_gorev_sayisi,denge,Alan başına görev sayısı,16,10–25,görev,Kendi tasarımın; alan_basina_bolum ≈ alan_gorev_sayisi × gorev_yildiz_fiyati / bolum_basina_yildiz.,9.6.2
+gorev_yildiz_fiyati,denge,Bir görevin yıldız fiyatı,5,2–8,yıldız,Kendi tasarımın.,9.6.2
+alan_sandigi_para,denge,Alan sandığındaki para,300,100–600,para,Orta (sabit paket); değer kendi tasarımın.,9.6.5
+alan_sandigi_takviyeler,denge,Alan sandığındaki takviyeler,"2 bomba taşı, 1 güdümlü taş",takviye adedi 1–5,ödül paketi,Orta (sabit paket); içerik kendi tasarımın.,9.6.5
+alan_sandigi_ek_araclar,denge,İlk alandan sonra sandığa eklenen araçlar,"1 tek hücre aracı, 1 renk küresi",takviye adedi 0–3,ödül paketi,Orta; içerik kendi tasarımın.,9.6.5
+alan_sandigi_kart_paketi_alani,denge,Sandığa kart paketi eklenmeye başlayan alan numarası,4,2–6,alan,Orta; değer kendi tasarımın.,9.6.5
+gorev_bildirimi_son_bolum,denge,Yapılabilir görev bildiriminin zorla gösterildiği son bölüm,80,50–150,bölüm,Yüksek; değer kendi tasarımın.,9.6.6
+alan_basina_bolum,denge,Bir alanın ortalama karşıladığı bölüm sayısı (= alan_gorev_sayisi × gorev_yildiz_fiyati / bolum_basina_yildiz),80,50–120,bölüm,Orta; değer kendi tasarımın.,9.6.7
+acilis_album_indirme,denge,Albüm görsellerinin indirilmeye başladığı bölüm,40,25–60,bölüm,Yüksek; değer kendi tasarımın.,"9.7.1, 9.4"
+acilis_album,denge,Albümün açıldığı bölüm,50,35–70,bölüm,Yüksek; değer kendi tasarımın.,"9.7.1, 9.4"
+album_sezon_giris_asgari_dk,denge,Albüm sezonuna girmek için sezonun bitimine kalması gereken asgari süre,60,15–180,dakika,Yüksek; değer kendi tasarımın.,9.7.1
+set_basina_kart,denge,Bir setteki azami kart,8,6–12,kart,Yüksek; değer kendi tasarımın.,9.7.3
+set_sayisi,denge,Bir sezondaki varsayılan set sayısı,12,8–20,set,Yüksek (yapılandırılabilir); değer kendi tasarımın.,9.7.3
+kart_azami_yildiz,denge,Kart nadirliğinin azami yıldızı,4,3–6,yıldız,Yüksek; değer kendi tasarımın.,9.7.4
+acima_katsayisi,denge,Her çift kartta eksik kart olasılığına eklenen pay,0.1,0–0.3,oran,"Sunucu tarafı, kendi tasarımın.",9.7.6
+rozetli_asama_sayisi,denge,Albüm sezonunun rozetli aşama sayısı,3,1–4,aşama,Orta; değer kendi tasarımın.,9.7.7
+cift_kart_sandik_fiyatlari,denge,Çift kart sandıklarının üç kademeli yıldız fiyatı,100 / 250 / 500,"her kademe ±0.5, artan",yıldız,Orta (üç kademe); değerler kendi tasarımın.,9.7.8
+gunluk_kart_gonderme,denge,Günlük azami kart gönderme,2,1–5,kart,Yüksek; değer kendi tasarımın.,9.7.9
+kart_istek_sifirlama_saat,denge,Kart isteme sınırının sıfırlanma aralığı,12,6–24,saat,Yüksek; değer kendi tasarımın.,9.7.9
+acilis_sezon_hatti,denge,Sezon ödül hattının açıldığı bölüm,40,25–60,bölüm,Yüksek; değer kendi tasarımın.,"9.8.1, 9.4"
+sezon_hatti_basamak_sayisi,denge,Sezon hattının ödül basamağı sayısı (hazne hariç),25,20–40,basamak,Yüksek (basamak yapısı); değer kendi tasarımın.,9.8.2
+sezon_hatti_basamak_hedefleri,denge,Basamak başına puan hedefleri (birikimli değil),"İlk 5 basamak: 2, 2, 4, 4, 6; sonra beşer basamak: 10, 16, 22, 28 (hazneye kadar toplam 398)",her eleman ±0.5; toplam 250–600,hat puanı,Kendi tasarımın; hat_puani_normal ile normal bölümde yaklaşık 199 galibiyet.,9.8.2
+kilometre_tasi_araligi,denge,Sezon hattında kilometre taşları arasındaki basamak sayısı,6,4–8,basamak,Yüksek (düzenli aralık); değer kendi tasarımın.,9.8.3
+hat_puani_normal,denge,Normal etiketli bölüm kazanınca verilen hat puanı tabanı,2,1–3,hat puanı,Yüksek (etiket tablosu); değer kendi tasarımın.,"9.8.4, 9.9.3, 10.9.2"
+hat_puani_zor,denge,Zor etiketli bölümün hat puanı tabanı,4,2–6,hat puanı,Yüksek; değer kendi tasarımın.,"9.8.4, 9.9.3, 10.9.2"
+hat_puani_cok_zor,denge,Çok zor etiketli bölümün hat puanı tabanı,7,4–10,hat puanı,Yüksek; değer kendi tasarımın.,"9.8.4, 9.9.3, 10.9.2"
+hat_puani_asiri_zor,denge,Aşırı zor etiketli bölümün hat puanı tabanı,12,8–20,hat puanı,Yüksek; değer kendi tasarımın.,"9.8.4, 9.9.3, 10.9.2"
+hat_puani_ozel,denge,Özel durumlu bölümlerin (ör. sunucunun işaretlediği etkinlik bölümleri) hat puanı tabanı,3,1–6,hat puanı,"Orta; özel durumun varlığı biliniyor, anlamı ve değeri kendi tasarımın.",9.8.4
+hazne_asama_puani,denge,Birikim haznesinde bir aşamayı dolduran puan,4,2–10,hat puanı,Orta; değer kendi tasarımın.,9.8.8
+hazne_asama_parasi,denge,Birikim haznesinde her aşamanın eklediği para,80,50–200,para,Yüksek (aşama × para formülü); değer kendi tasarımın.,9.8.8
+sezon_hazne_hedefi,denge,Sezon hattı haznesinin dolması için gereken puan (öneriyle 60 aşama × 80 = toplam 4800 para),240,100–400,hat puanı,Yüksek (hazne hedefi var); değer kendi tasarımın.,9.8.8
+sezon_suresi_gun,denge,Sezon ödül hattının süresi,30,28–31,gün,"Sunucu tarafı, kendi tasarımın.",9.8.11
+sezon_hatti_ucretsiz_toplam,denge,Ücretsiz hattın sezon boyunca toplam ödül önerisi,800 para; 60 dk sınırsız can; 30 dk sınırsız bomba; yaklaşık 20 tekil takviye,para 300–1500; sınırsız süreler 0–120 dk,ödül paketi,Düşük; kendi tasarımın.,9.8.12
+sezon_hatti_premium_toplam,denge,Premium hattın toplam ödül önerisi,6800 para (hazne 4800 dahil); 240 dk sınırsız can; 45 dk sınırsız çizgi; 60'ar dk sınırsız bomba ve renk küresi; yaklaşık 40 tekil takviye,para 3000–10000; sınırsız süreler 15–300 dk,ödül paketi,Düşük; kendi tasarımın.,9.8.12
+acilis_haftalik_hat,denge,Haftalık ödül hattının açıldığı bölüm,40,25–60,bölüm,Yüksek; değer kendi tasarımın.,"9.9.1, 9.4"
+haftalik_hat_basamak_sayisi,denge,Haftalık hattın ödül basamağı sayısı (hazne hariç),10,6–12,basamak,Yüksek (basamak yapısı); değer kendi tasarımın.,9.9.2
+haftalik_hat_basamak_hedefleri,denge,Haftalık hat basamak hedefleri,"2, 2, 4, 4, 6, 6, 8, 8, 10, 12 (hazneye kadar toplam 62)",her eleman ±0.5; toplam 40–100,hat puanı,Kendi tasarımın.,9.9.2
+haftalik_kilometre_tasi,denge,Haftalık hatta kilometre taşları arasındaki basamak sayısı,4,3–5,basamak,Orta; değer kendi tasarımın.,9.9.2
+haftalik_hazne_hedefi,denge,Haftalık hat haznesinin hedefi,300,150–500,hat puanı,Yüksek; değer kendi tasarımın.,9.9.2
+haftalik_hazne_parasi,denge,Haftalık hat haznesinin dolunca verdiği toplam para (= haftalik_hazne_hedefi / hazne_asama_puani × haftalik_hazne_asama_parasi),3000,1500–5000,para,Yüksek; değer kendi tasarımın.,9.9.2
+haftalik_hat_suresi_gun,denge,Haftalık hattın süresi,7,7,gün,Takvim haftası; başlangıç günü kendi tasarımın.,9.9.7
+deneme_sayaci_azami,denge,Bölüm başına deneme sayacının üst sınırı,99,50–250,deneme,Orta; değer kendi tasarımın.,9.11.1
+beceri_olcum_son_bolum,denge,Oyuncu becerisinin ölçüldüğü son bölüm,80,50–150,bölüm,Orta; değer kendi tasarımın.,9.11.3
+beceri_esikleri,denge,Bölüm başına ortalama deneme sayısına göre beceri düzeyleri,≤1.2 usta; ≤1.8 orta; ≤3.0 başlangıç; üstü becerisiz,"her eşik ±0.5, artan",deneme,Kendi tasarımın.,9.11.3
+zorluk_rastgelelik_agirligi,denge,Zorluk ağırlıklı rastgele üretecin oyuncu aleyhine kayma payı,normal 0; zor 0.2; çok zor 0.35; aşırı zor 0.5; becerisiz oyuncuda 0.1 eksik,0–0.8,oran,"Düşük; üretecin varlığı biliniyor, ağırlıklar kendi tasarımın.",9.11.5
+ek_hamle_sayisi,denge,Ek hamle teklifinin verdiği varsayılan hamle,6,3–10,hamle,Yüksek (sabit varsayılan); değer kendi tasarımın.,"7.4.2, 9.12.1"
+ek_hamle_fiyat_kademeleri,denge,Aynı bölümde art arda ek hamle alımlarının fiyatı (normal düzey),800 / 1600 / 2400 / 3200 / 4000,ilk kademe 500–1500; kademe artışı 500–1500,para,Yüksek (5 kademe); değerler kendi tasarımın.,9.12.2
+ek_hamle_paket_icerikleri,denge,Ek hamle kademelerinde hamleye eklenen özel taşlar,1. kademe: yok; 2.: 1 bomba; 3.: 1 güdümlü ve 1 bomba; 4.: 1 renk küresi ve 1 güdümlü; 5.: 2 renk küresi ve 1 bomba,"kademe başına 0–3 özel taş, artan",ödül paketi,Orta (üst kademelerde özel taş var); içerik kendi tasarımın.,9.12.3
+ek_hamle_artis_esigi,denge,Ek hamle artışının başladığı art arda başarısızlık,3,2–6,başarısızlık,Orta; değer kendi tasarımın.,9.11.4
+ek_hamle_artis_miktari,denge,Eşiği aşınca teklif edilen hamleye eklenen miktar,3,1–5,hamle,Orta; değer kendi tasarımın.,9.11.4
+ek_hamle_artis_siniri,denge,Artışın durduğu başarısızlık sayısı,8,5–12,başarısızlık,Orta; değer kendi tasarımın.,9.11.4
+ek_hamle_reklam_sayisi,denge,Reklam izleyince verilen ek hamle,3,1–5,hamle,Düşük; kendi tasarımın.,"9.12.4, 9.13.1"
+ikinci_uyari_son_bolum,denge,Teklif reddinde ikinci uyarının gösterildiği son bölüm,80,50–150,bölüm,Orta; değer kendi tasarımın.,9.12.5
+reklam_para_odulu,denge,Ödüllü reklamın verdiği para,50,20–100,para,Düşük; kendi tasarımın.,9.13.1
+acilis_hiz_yarisi,denge,Hız yarışı olayının açıldığı bölüm,34,20–50,bölüm,Yüksek; değer kendi tasarımın.,"10.1.1, 9.4"
+hiz_yarisi_grup_boyutu,denge,Hız yarışı grubundaki oyuncu sayısı,6,4–10,oyuncu,Yüksek (küçük grup); değer kendi tasarımın.,10.1.2
+hiz_yarisi_asgari_kalan_dk,denge,Hız yarışına katılmak için olayda kalması gereken asgari süre,10,5–20,dakika,Orta; değer kendi tasarımın.,10.1.2
+hiz_yarisi_puan_normal,denge,Hız yarışında normal bölüm kazanımının puanı,1,1,puan,Kendi tasarımın.,10.1.4
+hiz_yarisi_puan_zor,denge,Hız yarışında zor ve üstü etiketli bölüm kazanımının puanı,2,1–3,puan,Kendi tasarımın.,10.1.4
+hiz_yarisi_asama_sayisi,denge,Bir hız yarışı dönemindeki aşama sayısı,4,1–5,aşama,Orta; değer kendi tasarımın.,10.1.5
+hiz_yarisi_asama_suresi_dk,denge,Bir hız yarışı aşamasının süresi,20,15–45,dakika,Orta; değer kendi tasarımın.,10.1.5
+hiz_yarisi_birincilik_odulu,denge,Hız yarışı birincisinin ödülü,"1 satır aracı, 1 sütun aracı, 1 güdümlü taş, 200 para",para 100–500; takviye adedi 0–3,ödül paketi,Kendi tasarımın.,10.1.8
+son_liste_deneme_sayisi,denge,Olay sonunda son sıralamanın istenme denemesi,3,1–6,deneme,Yüksek (tekrar deneme var); değer kendi tasarımın.,"10.1.7, 10.6.5"
+son_liste_deneme_araligi_sn,denge,Son sıralama denemeleri arasındaki süre,5,3–20,sn,Yüksek; değer kendi tasarımın.,"10.1.7, 10.6.5"
+kurtarma_ilk_bolum,denge,İlk kurtarma bölümünün geldiği ilerleme bölümü,12,5–25,bölüm,Yüksek (erken başlangıç); değer kendi tasarımın.,10.2.2
+kurtarma_araligi_erken,denge,Erken dönemde iki kurtarma bölümü arasındaki ortalama bölüm sayısı,25,15–50,bölüm,Yüksek (desen); değer kendi tasarımın.,10.2.2
+kurtarma_araligi_gec,denge,Geç dönemde iki kurtarma bölümü arası (her bloğun aynı sıradaki bölümü),120,80–200,bölüm,Yüksek (desen); değer kendi tasarımın.,10.2.2
+kurtarma_tema_sayisi,denge,Dönüşümlü kullanılan kurtarma teması sayısı (ana tema hariç),5,3–8,tema,Kendi tasarımın.,10.2.3
+kurtarma_kazanma_parasi,denge,Kurtarma bölümü kazanınca verilen para,40,20–100,para,Yüksek; değer kendi tasarımın.,10.2.4
+acilis_takim,denge,Takım bölümünün açıldığı bölüm,24,10–35,bölüm,Yüksek; değer kendi tasarımın.,"10.7.1, 9.4"
+acilis_takim_yarisi,denge,Takım yarışı olayının açıldığı bölüm,28,15–40,bölüm,Yüksek; değer kendi tasarımın.,"10.3.1, 9.4"
+takim_yarisi_grup_boyutu,denge,Bir takım yarışı grubundaki takım sayısı,8,4–12,takım,"Sunucu tarafı, kendi tasarımın.",10.3.2
+takim_yarisi_puan_normal,denge,Takım yarışında normal bölüm kazanımının puanı,1,1,puan,Kendi tasarımın.,10.3.3
+takim_yarisi_puan_zor,denge,Takım yarışında zor ve üstü bölüm kazanımının puanı,2,1–3,puan,Kendi tasarımın.,10.3.3
+son_saatler_penceresi_saat,denge,"Takım olaylarında ""son saatler"" durumunun başladığı kalan süre",2,1–6,saat,Orta; değer kendi tasarımın.,10.3.4
+takim_yarisi_asgari_katki,denge,Takım yarışında ödül için gereken asgari katkı puanı,1,1–5,puan,Yüksek (eşik var); değer kendi tasarımın.,10.3.5
+takim_yarisi_sira_odulleri,denge,İlk beş takımın para ödülü,5000 / 2500 / 1500 / 1000 / 500,"her sıra ±0.5, azalan",para,Orta (sıraya göre liste); değerler kendi tasarımın.,10.3.6
+takim_yarisi_suresi_saat,denge,Takım yarışının süresi,48,24–72,saat,"Sunucu tarafı, kendi tasarımın.",10.3.8
+acilis_harita_kesif,denge,Harita keşif olayının açıldığı bölüm,80,60–120,bölüm,Yüksek; değer kendi tasarımın.,"10.4.1, 9.4"
+harita_kesif_azami_enerji,denge,Toplanabilir enerjinin üst sınırı,1500,500–3000,enerji,Yüksek (sınır var); değer kendi tasarımın.,10.4.2
+harita_kesif_gorev_maliyeti,denge,Bir harita görevinin ortalama enerji maliyeti (görev başına 20–80 arası dağılım),50,10–150,enerji,Kendi tasarımın.,10.4.3
+harita_kesif_sandik_esikleri,denge,Dört sandığın açıldığı ilerleme eşikleri,0.2 / 0.4 / 0.6 / 0.8 / 1.0,"3–6 eşik, artan, son eşik 1.0",ilerleme oranı,Kendi tasarımın.,10.4.5
+harita_kesif_hat_basamak,denge,Harita keşif olayının ödül hattındaki basamak sayısı,12,6–15,basamak,Yüksek (hat var); değer kendi tasarımın.,10.4.6
+harita_kesif_suresi_gun,denge,Harita keşif olayının süresi,7,5–14,gün,"Sunucu tarafı, kendi tasarımın.",10.4.9
+acilis_risk_basamaklari,denge,Risk basamakları olayının açıldığı bölüm,44,30–60,bölüm,Yüksek; değer kendi tasarımın.,"10.5.1, 9.4"
+risk_basamak_hedefleri,denge,Risk basamakları hedefleri,"4, 6, 8, 10, 12, 15, 18, 25 (toplam 98)",her eleman ±0.5; toplam 60–200,puan,Kendi tasarımın.,10.5.2
+risk_basamak_odulleri,denge,Risk basamakları ödülleri önerisi,Basamak başına 1 araç ya da takviye; 4. basamakta 20 dk sınırsız can; 6. basamakta 300 para; son basamakta 800 para ve 1 başlangıç takviyesi seti,para ±%50; takviye adedi 0–3,ödül paketi,Kendi tasarımın.,10.5.2
+risk_basamak_azami_toplanabilir,denge,Risk basamaklarında toplanabilir üst sınırı,5000,1000–10000,puan,Yüksek (sınır var); değer kendi tasarımın.,10.5.2
+risk_basamak_sans_hakki,denge,Risk basamaklarında oyuncunun şans hakkı sayısı,4,2–5,hak,Yüksek (sabit hak sayısı); değer kendi tasarımın.,10.5.3
+acilis_ortakli_atis,denge,Ortaklı atış olayının açıldığı bölüm,70,50–100,bölüm,Yüksek; değer kendi tasarımın.,"10.6.1, 9.4"
+ortakli_atis_azami_ortak,denge,Ortaklı atış olayında azami ortak sayısı,3,2–5,ortak,Yüksek (küçük grup); değer kendi tasarımın.,10.6.1
+ortakli_atis_puan_basamaklari,denge,Maskotun evre atladığı puan basamakları,3000 / 6000 / 10000 / 15000,"her eleman ±0.5, artan",puan,Yüksek (basamak yapısı); değerler kendi tasarımın.,10.6.4
+ortakli_atis_buyuk_odul,denge,Ortaklı atış büyük ödülü,"3000 para, 2 bomba taşı, 1 satır aracı, 45 dk sınırsız can, 1 isim stili",para 1500–6000; takviye adedi 0–3,ödül paketi,Kendi tasarımın.,10.6.5
+ortakli_atis_bilye_donusumu,denge,Kullanılmayan bilyelerin dönüşüm oranı ve sınırı,"Her 40 bilye için 1 renk küresi, en fazla 2",bilye 20–100 başına 1; en fazla 1–5,dönüşüm oranı,Yüksek (dönüşüm var); oran kendi tasarımın.,10.6.5
+can_istegi_azami_yardim,denge,Bir can isteğinin karşılanabileceği azami yardım sayısı,5,1–10,yardım,Kendi tasarımın.,10.7.3
+takim_azami_uye,denge,Bir takımdaki azami üye sayısı,40,20–50,üye,"Sunucu tarafı, kendi tasarımın.",10.7.8
+mini_oyun_otomatik_atis_sn,denge,Mini oyunda otomatik atıştan önceki bekleme,8,5–15,sn,Kendi tasarımın.,10.8.4
+acilis_ilk_toplama_olayi,denge,İlk basamaklı toplama olayının açıldığı bölüm,44,30–60,bölüm,Yüksek; değer kendi tasarımın.,"10.9.1, 9.4"
+olay_turu_acilis_araligi,denge,Yeni bir basamaklı toplama olayı türünün açılması için ortalama bölüm aralığı,12,5–25,bölüm,Orta (yayılma deseni); değer kendi tasarımın.,"10.9.1, 9.4"
+toplama_olayi_basamak_sayisi,denge,Basamaklı toplama olayının basamak sayısı,8,3–25,basamak,Kendi tasarımın; olay türüne göre değişir.,10.9.1
+toplama_olayi_suresi_gun,denge,Basamaklı toplama olayının süresi,3,1–7,gün,"Sunucu tarafı, kendi tasarımın.",10.9.1
+hiz_yarisi_azami_katilim,denge,Bir hız yarışı döneminde azami katılım sayısı,3,1–4,katılım,Kendi tasarımın; hiz_yarisi_asama_sayisi değerini aşmaz.,10.1.5
+kurtarma_ana_tema_payi,denge,Kurtarma bölümlerinde ana temanın payı,0.33,0–0.5,oran,Kendi tasarımın.,10.2.3
+katman_azami_katmanli_blok,mekanik,Katmanlı bloğun azami katmanı,4,1–4,katman,Mekanik kural değeri; analizdeki kurala sadık (yuvarlanmadı).,6.2.1
+katman_azami_sert_blok,mekanik,Sert bloğun azami katmanı,3,1–3,katman,Mekanik kural değeri; analizdeki kurala sadık (yuvarlanmadı).,6.2.1
+katman_azami_dusen_kirilabilir,mekanik,Düşen kırılabilirin azami katmanı,2,1–3,katman,"Orta; değer kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",6.2.1
+katman_azami_coklu_vurus,mekanik,Çoklu vuruş bloğunun azami katmanı,4,2–6,katman,"Orta; değer kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",6.2.1
+katman_azami_uretici,mekanik,Üreticinin azami katmanı,2,1–4,katman,"Orta; değer kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",6.2.1
+katman_azami_zemin,mekanik,Zemin katmanının azami katmanı,2,1–3,katman,Mekanik kural değeri; analizdeki kurala sadık.,6.2.2
+katman_azami_kilit,mekanik,Kilidin azami katmanı,2,1–3,katman,Mekanik kural değeri; analizdeki kurala sadık.,6.2.2
+katman_azami_ortu,mekanik,Örtünün azami katmanı,2,1–3,katman,"Orta; değer kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",6.2.2
+katman_azami_sert_kaplama,mekanik,Sert kaplamanın azami katmanı,2,1–4,katman,"Orta; değer kendi tasarımın. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",6.2.2
+dar_tahta_azami_sutun_eksigi,denge,Şekil veren dar tahtalarda standarda göre azami sütun eksiği,2,1–3,sütun,Yüksek (desen); değer kendi tasarımın.,8.1.2
+dar_tahta_azami_satir_eksigi,denge,Şekil veren kısa tahtalarda standarda göre azami satır eksiği,3,1–4,satır,Yüksek (desen); değer kendi tasarımın.,8.1.2
+kolay_bolum_azami_renk_eksigi,denge,Kolaylaştırılmış bölümlerde standarda göre azami renk eksiği,1,1–2,renk,Yüksek (desen); değer kendi tasarımın.,8.2.2
+istisna_fazla_renk,mekanik,İstisnai bölümlerde standarda eklenebilen renk,1,0–1,renk,Mekanik kural değeri; analizdeki kurala sadık.,8.2.2
+erken_azami_hedef_turu,denge,Erken bölümlerde azami hedef türü sayısı,3,1–3,hedef,Yüksek (desen); değer kendi tasarımın.,8.4.1
+haftalik_hazne_asama_parasi,denge,Haftalık hat haznesinde her aşamanın eklediği para,40,20–100,para,Kendi tasarımın; aşama puanı hazne_asama_puani ile ortaktır.,9.9.2
+tanitim_ilk_bolum,denge,Erken dönemde ilk yeni engel tanıtımının yapıldığı bölüm,5,1–8,bölüm,Kendi tasarımın; tanıtımlar bu bölümden itibaren tanitim_araligi_erken aralıkla gelir.,8.6.7
+cift_kart_yildiz_degeri,denge,Bir çift kartın dönüştüğü yıldız miktarı,kartın nadirlik yıldızı × 2,yıldız × 1–5,yıldız,Kendi tasarımın.,9.7.8
+bonus_gec_donem_baslangici,denge,Bonus bölümlerinde geç dönem aralığının başladığı bölüm,500,200–1000,bölüm,Kendi tasarımın.,8.7.1
+kurtarma_gec_donem_baslangici,denge,Kurtarma bölümlerinde geç dönem ritminin başladığı bölüm,1200,600–2000,bölüm,Kendi tasarımın.,10.2.2
+yeniden_kurma_deneme_sayisi,mekanik,"""Olası hamle yok"" akışında tahtanın en fazla kaç kez yeniden üretileceği",5,1–10,deneme,"Kendi tasarımın; sonsuz döngüyü önler. Mekanik; kaynak değeri bilinmiyor, öneri kendi tasarımın.",5.6.5

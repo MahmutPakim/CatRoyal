@@ -1,0 +1,27 @@
+{
+  "kimlik": 4,
+  "surum": 1,
+  "genislik": 7,
+  "yukseklik": 8,
+  "hamle": 20,
+  "renkler": 4,
+  "engeller": {
+    "pt": { "arketip": "para_tasi" }
+  },
+  "hucreler": [
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    pt:1 ?    ?    ?    pt:1 ?",
+    "?    ?    ?    pt:1 ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "pt:1 ?    ?    ?    ?    ?    pt:1",
+    "?    ?    pt:1 ?    pt:1 ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    pt:1 ?    ?    ?    pt:1 ?"
+  ],
+  "dolguSetleri": [
+    { "pas": 12, "ogeler": [ { "kod": "pt:1", "agirlik": 1, "azami": 4 } ] }
+  ],
+  "hedefler": [
+    { "tur": "para_tasi", "adet": 0 }
+  ]
+}

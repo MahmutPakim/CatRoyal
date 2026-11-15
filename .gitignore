@@ -1,0 +1,22 @@
+bin/
+obj/
+.yapi/
+.DS_Store
+
+# Unity
+Unity/Library/
+Unity/Temp/
+Unity/Logs/
+Unity/UserSettings/
+Unity/Obj/
+Unity/Build/
+Unity/Builds/
+Unity/MemoryCaptures/
+Unity/*.csproj
+Unity/*.sln
+Unity/*.slnx
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+.vs/
+.idea/
