@@ -18,7 +18,8 @@ namespace CatRoyal.Sunum
     /// oyun (tahta, araçlar, ek hamle teklifi) ve sonuç (ödüller). Oyun kuralı ve ekonomi kuralı içermez: kurallar
     /// çekirdekte (<see cref="BolumOturumu"/>), ekonomi meta katmandadır (<see cref="BolumAkisi"/>, <see cref="Oyuncu"/>).
     ///
-    /// Geçici olanlar: gösterge IMGUI ile çizilir; oyuncu durumu kaydedilmez, oyun kapanınca sıfırlanır.
+    /// Oyuncu durumu <see cref="OyuncuDeposu"/> ile kaydedilir ve açılışta yüklenir (GDD 9.1.5).
+    /// Geçici olan: gösterge IMGUI ile çizilir.
     /// </summary>
     public sealed class OyunSahnesi : MonoBehaviour
     {
@@ -41,6 +42,11 @@ namespace CatRoyal.Sunum
 
         private readonly ISaat _saat = new SistemSaati();
         private readonly HashSet<TakviyeTuru> _secilenTakviyeler = new HashSet<TakviyeTuru>();
+
+        private readonly OyuncuDeposu _depo = new OyuncuDeposu();
+        private readonly IAnalitik _analitik = new GunlukAnalitigi();
+        private IDisposable _analitikBagi;
+        private float _sonKayitDenetimi;
 
         private OyunVerisi _veri;
         private Oyuncu _oyuncu;
@@ -87,7 +93,7 @@ namespace CatRoyal.Sunum
                     throw new InvalidOperationException("StreamingAssets/CatRoyal/veri/bolumler altında bölüm dosyası yok.");
                 }
 
-                _oyuncu = new Oyuncu(_veri.Parametreler, Simdi);
+                OyuncuyuYukle();
                 _etiketler = _veri.EtiketTablosu();
                 _ipucuBeklemesi = (float)_veri.Parametreler.Sayi("sunum_ipucu_bekleme_suresi");
 
@@ -111,6 +117,58 @@ namespace CatRoyal.Sunum
                 _hata = hata.Message;
                 Debug.LogException(hata);
             }
+        }
+
+        // ------------------------------------------------------------------ Kayıt
+
+        /// <summary>Kayıtlı oyuncuyu yükler; kayıt yoksa ya da okunamıyorsa yeni oyuncuyla başlar.</summary>
+        private void OyuncuyuYukle()
+        {
+            _analitikBagi?.Dispose();
+            _oyuncu = _depo.Yukle(_veri.Parametreler, Simdi, out string uyari);
+            _analitikBagi = AnalitikBaglayici.Bagla(_oyuncu, _analitik);
+            if (uyari != null)
+            {
+                Debug.LogWarning(uyari);
+                Bildir(uyari);
+            }
+        }
+
+        private void Kaydet()
+        {
+            if (_oyuncu != null)
+            {
+                _depo.Kaydet(_oyuncu);
+            }
+        }
+
+        /// <summary>Değişen durum en geç iki saniye içinde diske yazılır; değişmediyse dosyaya dokunulmaz.</summary>
+        private void LateUpdate()
+        {
+            if (Time.unscaledTime - _sonKayitDenetimi >= 2f)
+            {
+                _sonKayitDenetimi = Time.unscaledTime;
+                Kaydet();
+            }
+        }
+
+        private void OnApplicationPause(bool duraklatildi)
+        {
+            if (duraklatildi)
+            {
+                Kaydet();
+            }
+        }
+
+        /// <summary>Başlamış bir bölümden çıkmak kayıp sayılır (GDD 9.1.3); oyun kapatılırken de öyledir.</summary>
+        private void OnApplicationQuit()
+        {
+            if (_ekran == Ekran.Oyun && _akis != null)
+            {
+                _akis.SonucuIsle(Simdi, cikildi: true);
+            }
+
+            Kaydet();
         }
 
         // ------------------------------------------------------------------ Ekran geçişleri
@@ -171,6 +229,7 @@ namespace CatRoyal.Sunum
             _secilenTakviyeler.Clear();
             _gorunum.gameObject.SetActive(true);
             _gorunum.Kur(_oturum.Baglam.Tahta, _veri.Parametreler);
+            _gorunum.GuncelTahta = () => _oturum.Baglam.Tahta;
             KamerayiAyarla();
             _sonHamleZamani = Time.time;
         }
@@ -179,6 +238,7 @@ namespace CatRoyal.Sunum
         private void SonucaGec(bool cikildi = false)
         {
             _sonuc = _akis.SonucuIsle(Simdi, cikildi);
+            Kaydet();
             _ekran = Ekran.Sonuc;
             _gorunum.gameObject.SetActive(false);
             _seciliArac = null;
@@ -217,6 +277,15 @@ namespace CatRoyal.Sunum
             if (_gorunum.Mesgul)
             {
                 _sonHamleZamani = Time.time;
+                return;
+            }
+
+            // GDD 7.6.2, 7.6.3: kazanılan bölümde kalan hamleler çizgi taşına dönüşüp patlar; sonra sonuç ekranı gelir.
+            if (_oturum.Durum == BolumDurumu.Kazanildi && !_oturum.ArtanHamlelerBildirildi)
+            {
+                var gosteri = new List<Olay>();
+                _oturum.ArtanHamleGosterisi(gosteri);
+                OlaylariOynat(gosteri);
                 return;
             }
 
@@ -471,10 +540,15 @@ namespace CatRoyal.Sunum
             // Geliştirici kısayolları: bölüm seçimi ve kapıları açma. Oyunun parçası değildir.
             float alt = yukseklik - 84f;
             GUI.Label(new Rect(x, alt, w, 22), $"Geliştirici — ulaşılan en yüksek bölüm: {_oyuncu.EnYuksekBolum}", _metin);
-            float dugme = (w - 16f) / 3f;
+            float dugme = (w - 24f) / 4f;
             if (GUI.Button(new Rect(x, alt + 26, dugme, 30), "Önceki bölüm")) BolumOncesineGec(_bolumSirasi - 1);
             if (GUI.Button(new Rect(x + dugme + 8, alt + 26, dugme, 30), "Sonraki bölüm")) BolumOncesineGec(_bolumSirasi + 1);
             if (GUI.Button(new Rect(x + ((dugme + 8) * 2), alt + 26, dugme, 30), "Kapıları aç")) _oyuncu.EnYuksekBolum = 500;
+            if (GUI.Button(new Rect(x + ((dugme + 8) * 3), alt + 26, dugme, 30), "Kaydı sil"))
+            {
+                _depo.Sil();
+                OyuncuyuYukle();
+            }
         }
 
         /// <summary>
@@ -544,6 +618,10 @@ namespace CatRoyal.Sunum
             GUI.Label(new Rect(genislik - 212, 10, 200, 24), $"Kalan hamle: {_oturum.KalanHamle}", _sagMetin);
 
             string hedefler = string.Join("   ", _oturum.Hedefler.Turler.Select(tur => $"{HedefAdi(tur)}: {_oturum.Hedefler.Kalan(tur)}"));
+            if (_oturum.EkranSayisi > 1)
+            {
+                hedefler = $"Ekran {_oturum.GecerliEkran}/{_oturum.EkranSayisi}   " + hedefler;
+            }
             GUI.Label(new Rect(12, 36, genislik - 24, 24), "Hedef — " + hedefler, _metin);
 
             GUI.Label(new Rect(12, 66, genislik - 110, 24), ParaVeCan(), _metin);

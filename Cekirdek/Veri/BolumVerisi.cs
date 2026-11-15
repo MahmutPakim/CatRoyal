@@ -31,6 +31,20 @@ namespace CatRoyal.Cekirdek.Veri
         public int? Azami { get; }
     }
 
+    /// <summary>Çok ekranlı bölümde bir ekranın satır aralığı (GDD 8.9.1); satırlar 1 tabanlı ve uçlar dahildir.</summary>
+    public readonly struct EkranAraligi
+    {
+        public EkranAraligi(int ilkSatir, int sonSatir)
+        {
+            IlkSatir = ilkSatir;
+            SonSatir = sonSatir;
+        }
+
+        public int IlkSatir { get; }
+        public int SonSatir { get; }
+        public int Yukseklik => SonSatir - IlkSatir + 1;
+    }
+
     public sealed class DolguSetiVerisi
     {
         public List<DolguOgesiVerisi> Ogeler { get; } = new List<DolguOgesiVerisi>();
@@ -84,6 +98,12 @@ namespace CatRoyal.Cekirdek.Veri
 
         public bool CaprazKaymaIzinli { get; internal set; }
         public bool CokEkranli { get; internal set; }
+
+        /// <summary>
+        /// Ekranların satır aralıkları, yukarıdan aşağıya (GDD 8.9.1). Tek ekranlı bölümde bütün tahtayı kapsayan
+        /// tek bir aralıktır.
+        /// </summary>
+        public List<EkranAraligi> Ekranlar { get; } = new List<EkranAraligi>();
         public bool TahtadaDelikVar { get; internal set; }
 
         /// <summary>İsteğe bağlı sınır listesi (tür ve adet); ör. süreli bölümde süre.</summary>
@@ -203,6 +223,20 @@ namespace CatRoyal.Cekirdek.Veri
                 }
             }
 
+            if (kok.TryGetValue("ekranlar", out var ekranlar) && ekranlar != null)
+            {
+                foreach (var oge in Dizi(ekranlar, "ekranlar"))
+                {
+                    var cift = Dizi(oge, "ekranlar");
+                    if (cift.Count != 2)
+                    {
+                        throw new BolumVerisiHatasi("ekranlar: her öğe [ilk satır, son satır] olmalı.");
+                    }
+
+                    veri.Ekranlar.Add(new EkranAraligi((int)Sayi(cift[0], "ekranlar"), (int)Sayi(cift[1], "ekranlar")));
+                }
+            }
+
             if (kok.TryGetValue("ekSinirlar", out var sinirlar) && sinirlar != null)
             {
                 foreach (var oge in Dizi(sinirlar, "ekSinirlar"))
@@ -233,14 +267,37 @@ namespace CatRoyal.Cekirdek.Veri
                 throw new BolumVerisiHatasi(on + "genişlik 1 ile parametre: tahta_genislik_standart arasında olmalı (GDD 8.1.1).");
             }
 
+            int standartYukseklik = p.TamSayi(ParametreAdlari.TahtaYukseklikStandart);
             if (veri.CokEkranli)
             {
-                throw new BolumVerisiHatasi(on + "çok ekranlı bölümler (GDD 8.9) henüz desteklenmiyor.");
+                EkranlariDogrula(veri, p, on, standartYukseklik);
+            }
+            else
+            {
+                if (veri.Ekranlar.Count > 0)
+                {
+                    throw new BolumVerisiHatasi(on + "'ekranlar' yalnız çok ekranlı bölümde (bayraklar.cokEkranli) verilir (GDD 8.9).");
+                }
+
+                if (veri.Yukseklik < 1 || veri.Yukseklik > standartYukseklik)
+                {
+                    throw new BolumVerisiHatasi(on + "yükseklik 1 ile parametre: tahta_yukseklik_standart arasında olmalı (GDD 8.1.3).");
+                }
+
+                veri.Ekranlar.Add(new EkranAraligi(1, veri.Yukseklik));
             }
 
-            if (veri.Yukseklik < 1 || veri.Yukseklik > p.TamSayi(ParametreAdlari.TahtaYukseklikStandart))
+            if (veri.Hedefler.Any(h => h.Ekran < 1 || h.Ekran > veri.Ekranlar.Count))
             {
-                throw new BolumVerisiHatasi(on + "yükseklik 1 ile parametre: tahta_yukseklik_standart arasında olmalı (GDD 8.1.3).");
+                throw new BolumVerisiHatasi(on + $"hedeflerin ekran numarası 1 ile {veri.Ekranlar.Count} arasında olmalı (GDD 8.9.1).");
+            }
+
+            foreach (var konum in veri.ToplamaHucreleri)
+            {
+                if (konum.Satir < 1 || konum.Satir > veri.Yukseklik || konum.Sutun < 1 || konum.Sutun > veri.Genislik)
+                {
+                    throw new BolumVerisiHatasi(on + $"toplama hücresi {konum} tahtanın dışında.");
+                }
             }
 
             // GDD 8.2.2: standarttan fazla renk yalnız istisnai bölümlerde.
@@ -309,6 +366,51 @@ namespace CatRoyal.Cekirdek.Veri
                 {
                     throw new BolumVerisiHatasi(on + $"dolgu kodu '{kod}' bir taş ya da engel olmalı.");
                 }
+            }
+        }
+
+        /// <summary>
+        /// GDD 8.1.3, 8.9.1: uzun tahta dikeyde ekranlara bölünür. Ekranlar tahtayı yukarıdan aşağıya boşluksuz
+        /// kaplar; her ekran standart yüksekliği aşmaz ve en az bir hedef taşır.
+        /// </summary>
+        private static void EkranlariDogrula(BolumVerisi veri, ParametreTablosu p, string on, int standartYukseklik)
+        {
+            int azamiYukseklik = p.TamSayi(ParametreAdlari.KaydirmaliTahtaYukseklik);
+            if (veri.Yukseklik < 1 || veri.Yukseklik > azamiYukseklik)
+            {
+                throw new BolumVerisiHatasi(on + "çok ekranlı bölümde yükseklik 1 ile parametre: kaydirmali_tahta_yukseklik arasında olmalı (GDD 8.1.3).");
+            }
+
+            if (veri.Ekranlar.Count < 2)
+            {
+                throw new BolumVerisiHatasi(on + "çok ekranlı bölüm en az iki ekran tanımlamalı ('ekranlar'; GDD 8.9.1).");
+            }
+
+            int beklenen = 1;
+            for (int i = 0; i < veri.Ekranlar.Count; i++)
+            {
+                var ekran = veri.Ekranlar[i];
+                if (ekran.IlkSatir != beklenen || ekran.SonSatir < ekran.IlkSatir)
+                {
+                    throw new BolumVerisiHatasi(on + $"ekran {i + 1}: ekranlar tahtayı yukarıdan aşağıya boşluksuz ve çakışmadan kaplamalı (GDD 8.9.1).");
+                }
+
+                if (ekran.Yukseklik > standartYukseklik)
+                {
+                    throw new BolumVerisiHatasi(on + $"ekran {i + 1}: bir ekran parametre: tahta_yukseklik_standart satırı aşamaz (GDD 8.1.1).");
+                }
+
+                if (!veri.Hedefler.Any(h => h.Ekran == i + 1))
+                {
+                    throw new BolumVerisiHatasi(on + $"ekran {i + 1}: her ekranın en az bir hedefi olmalı (GDD 8.9.1).");
+                }
+
+                beklenen = ekran.SonSatir + 1;
+            }
+
+            if (beklenen != veri.Yukseklik + 1)
+            {
+                throw new BolumVerisiHatasi(on + "ekranlar tahtanın bütün satırlarını kaplamalı (GDD 8.9.1).");
             }
         }
 

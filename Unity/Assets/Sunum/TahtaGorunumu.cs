@@ -42,6 +42,11 @@ namespace CatRoyal.Sunum
         /// <summary>Olaylar oynatılıyor mu? Oynatma sürerken girdi alınmaz.</summary>
         public bool Mesgul { get; private set; }
 
+        /// <summary>
+        /// Oturumun o an oynanan tahtası. Çok ekranlı bölümde (GDD 8.9) ekran değişince görünüm bu tahtaya geçer.
+        /// </summary>
+        public System.Func<Tahta> GuncelTahta { get; set; }
+
         public void Kur(Tahta tahta, ParametreTablosu parametreler)
         {
             _tahta = tahta;
@@ -321,6 +326,15 @@ namespace CatRoyal.Sunum
             while (i < olaylar.Count)
             {
                 var olay = olaylar[i];
+
+                // GDD 8.9.1: ekran değişti. Sonraki olaylar yeni ekranın tahtasına göredir; görünüm doğrudan
+                // yeni tahtanın durulmuş hâline geçer.
+                if (olay is EkranDegisti && GuncelTahta != null)
+                {
+                    yield return new WaitForSeconds(0.4f);
+                    _tahta = GuncelTahta();
+                    break;
+                }
 
                 // Ardışık düşme olayları tek dalga olarak birlikte oynar.
                 if (DusmeOlayi(olay))

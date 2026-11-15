@@ -20,7 +20,8 @@ namespace CatRoyal.Cekirdek
             Dolgu = new RastgeleDolgu();
         }
 
-        public Tahta Tahta { get; }
+        /// <summary>Oynanan tahta; çok ekranlı bölümde geçerli ekranın tahtasıdır (GDD 2.1.7).</summary>
+        public Tahta Tahta { get; internal set; }
         public AkBayraklari Bayraklar { get; }
         public ParametreTablosu Parametreler { get; }
         public IRastgele Rastgele { get; }

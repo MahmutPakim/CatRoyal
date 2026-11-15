@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using CatRoyal.Cekirdek.Yapilandirma;
 
@@ -106,6 +107,50 @@ namespace CatRoyal.Cekirdek.Meta
             return harcanan;
         }
 
+        /// <summary>Alanın görevleri de kaydedilir: yüklenen kayıt, görev listesi yeniden verilmeden kaldığı yerden sürer.</summary>
+        internal Dictionary<string, object?> DurumuYaz() => new Dictionary<string, object?>
+        {
+            ["alan_numarasi"] = AlanNumarasi,
+            ["durum"] = Durum.ToString(),
+            ["gorevler"] = _gorevler.Select(g => (object?)new Dictionary<string, object?>
+            {
+                ["kimlik"] = g.Kimlik,
+                ["yildiz_fiyati"] = g.YildizFiyati,
+                ["onkosullar"] = g.Onkosullar.Cast<object?>().ToList(),
+            }).ToList(),
+            ["insa_edilen"] = _insaEdilen.OrderBy(k => k, StringComparer.Ordinal).Cast<object?>().ToList(),
+        };
+
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            AlanNumarasi = Math.Max(1, KayitAlani.TamSayi(d, "alan_numarasi", 1));
+            _gorevler = new List<AlanGorevi>();
+            foreach (object? oge in KayitAlani.Dizi(d, "gorevler"))
+            {
+                if (!(oge is Dictionary<string, object?> g) || !(g.TryGetValue("kimlik", out object? kimlik) && kimlik is string ad))
+                {
+                    throw new KayitHatasi("Kayıt: alan görevi okunamadı.");
+                }
+
+                _gorevler.Add(new AlanGorevi(
+                    ad,
+                    KayitAlani.TamSayi(g, "yildiz_fiyati", VarsayilanGorevFiyati),
+                    KayitAlani.Dizi(g, "onkosullar").OfType<string>().ToArray()));
+            }
+
+            _insaEdilen.Clear();
+            foreach (string kimlik in KayitAlani.Dizi(d, "insa_edilen").OfType<string>())
+            {
+                if (_gorevler.Any(g => g.Kimlik == kimlik)) _insaEdilen.Add(kimlik);
+            }
+
+            Durum = d.TryGetValue("durum", out object? durum)
+                && Enum.TryParse(durum as string, out AlanDurumu okunan)
+                && Enum.IsDefined(typeof(AlanDurumu), okunan)
+                    ? okunan
+                    : AlanDurumu.Insaatta;
+        }
+
         /// <summary>
         /// Alan sandığı açılır ve bir sonraki alan açılır (GDD 9.6.4). Sandık alan numarasından bağımsız sabit bir
         /// pakettir (9.6.5); burada yalnızca parası verilir, takviye içeriği sunucu ya da tasarım tablosundan gelir.
@@ -162,6 +207,42 @@ namespace CatRoyal.Cekirdek.Meta
 
             CiftKartSayisi++;
             return false;
+        }
+
+        internal Dictionary<string, object?> DurumuYaz()
+        {
+            var setler = new Dictionary<string, object?>();
+            foreach (var cift in _setler.OrderBy(c => c.Key))
+            {
+                setler[cift.Key.ToString(CultureInfo.InvariantCulture)] = cift.Value.OrderBy(k => k).Cast<object?>().ToList();
+            }
+
+            return new Dictionary<string, object?> { ["cift_kart_sayisi"] = CiftKartSayisi, ["setler"] = setler };
+        }
+
+        /// <summary>Albüm kayıttan sonra küçüldüyse dışarıda kalan kartlar atlanır.</summary>
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            CiftKartSayisi = Math.Max(0, KayitAlani.TamSayi(d, "cift_kart_sayisi", 0));
+            _setler.Clear();
+            foreach (var cift in KayitAlani.Nesne(d, "setler"))
+            {
+                if (!int.TryParse(cift.Key, NumberStyles.None, CultureInfo.InvariantCulture, out int set)
+                    || set >= _setSayisi
+                    || !(cift.Value is List<object?> kartlar))
+                {
+                    continue;
+                }
+
+                var okunan = new HashSet<int>();
+                foreach (object? kart in kartlar)
+                {
+                    int no = KayitAlani.TamSayi(kart, "setler");
+                    if (no >= 0 && no < _setBasinaKart) okunan.Add(no);
+                }
+
+                if (okunan.Count > 0) _setler[set] = okunan;
+            }
         }
 
         /// <summary>Set doldu mu (GDD 9.7.7)?</summary>

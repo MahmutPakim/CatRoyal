@@ -30,6 +30,12 @@ namespace CatRoyal.Cekirdek.Bolum
     }
 
     /// <summary>
+    /// Çok ekranlı bölümde bir sonraki ekranın tahtasını kurar (GDD 8.9). Rastgele renklendirilecek hücreleri
+    /// <paramref name="rastgeleHucreler"/> listesine ekler; taş kimlikleri <paramref name="onceki"/> tahtadan sürer.
+    /// </summary>
+    public delegate Tahta EkranKurucu(int ekran, Tahta onceki, List<Konum> rastgeleHucreler);
+
+    /// <summary>
     /// Bir bölümün oynanışı: hamle sayacı (GDD 7.2), hedefler (7.1), kazanma (7.3), hamle bitti akışı (7.4, AK-02),
     /// "olası hamle yok" akışı (7.5), dolum göstergesi (3.7), yedek hamle hakkı (3.8), oyun içi araçlar ve
     /// başlangıç takviyeleri (3.9). Fiyatlar, can ve envanter meta katmandadır (9).
@@ -73,19 +79,46 @@ namespace CatRoyal.Cekirdek.Bolum
         /// </summary>
         public HamleKapsami Kapsam { get; set; } = HamleKapsami.Tam;
 
+        /// <summary>Bölümdeki ekran sayısı (GDD 8.9.1); tek ekranlı bölümde 1.</summary>
+        public int EkranSayisi { get; set; } = 1;
+
+        /// <summary>Oynanan ekran (GDD 2.1.7).</summary>
+        public int GecerliEkran => Hedefler.GecerliEkran;
+
+        /// <summary>Çok ekranlı bölümde sonraki ekranları kuran işlev; bölüm kurucusu verir.</summary>
+        public EkranKurucu? EkranKurucu { get; set; }
+
+        /// <summary>
+        /// GDD 2.3.9 (öneri, 11.2.27): açıksa hamle yalnız kendi dalgasını işletir; düşme ve kaskad
+        /// <see cref="Ilerle"/> çağrılarıyla adım adım sürer ve adımlar arasında yeni hamle kabul edilir.
+        /// Kapalıysa her hamle tahta durulana kadar tek çağrıda işlenir.
+        /// </summary>
+        public bool AdimliDurulma { get; set; }
+
+        /// <summary>Adımlı durulmada tahta henüz durulmadı mı?</summary>
+        public bool DurulmaSuruyor => _surenMotor != null;
+
+        /// <summary>Artan hamle gösterisi yapıldı ya da atlandı mı (GDD 7.6.2)?</summary>
+        public bool ArtanHamlelerBildirildi { get; private set; }
+
+        private EtkiMotoru? _surenMotor;
+        private bool _bekleyenOyuncuHamlesi;
+
         private ParametreTablosu P => Baglam.Parametreler;
 
         // ------------------------------------------------------------------ Hamleler
 
         /// <summary>Kaydırma hamlesi (GDD 2.3.1). Bölüm "oynanıyor" durumunda değilse reddedilir (2.3.7).</summary>
         public HamleSonucu Kaydir(Konum cikilan, Konum gidilen, List<Olay> olaylar) =>
-            HamleYap(olaylar, sayaciDusur => HamleIsleyici.Kaydir(Baglam, cikilan, gidilen, olaylar, Kapsam, sayaciDusur));
+            HamleYap(olaylar, (sayaciDusur, kapsam, motor) =>
+                HamleIsleyici.Kaydir(Baglam, cikilan, gidilen, olaylar, kapsam, sayaciDusur, motor));
 
         /// <summary>Dokunma hamlesi (GDD 2.3.5).</summary>
         public HamleSonucu Dokun(Konum konum, List<Olay> olaylar) =>
-            HamleYap(olaylar, sayaciDusur => HamleIsleyici.Dokun(Baglam, konum, olaylar, Kapsam, sayaciDusur));
+            HamleYap(olaylar, (sayaciDusur, kapsam, motor) =>
+                HamleIsleyici.Dokun(Baglam, konum, olaylar, kapsam, sayaciDusur, motor));
 
-        private HamleSonucu HamleYap(List<Olay> olaylar, Func<Action, HamleSonucu> calistir)
+        private HamleSonucu HamleYap(List<Olay> olaylar, Func<Action, HamleKapsami, EtkiMotoru?, HamleSonucu> calistir)
         {
             if (Durum != BolumDurumu.Oynaniyor)
             {
@@ -96,12 +129,43 @@ namespace CatRoyal.Cekirdek.Bolum
 
             // GDD 7.2.1: sayaç geçerli hamle anında bir azalır; patlamalar ve düşmeler beklenmez.
             // 7.2.2, 7.2.3: geçersiz ve imkânsız hamle, kaskad ve karıştırma sayaçtan düşmez.
-            var sonuc = calistir(() =>
+            void SayaciDusur()
             {
                 KalanHamle = Math.Max(0, KalanHamle - 1);
                 YapilanHamle++;
                 olaylar.Add(new HamleSayaciDegisti(KalanHamle, YapilanHamle));
-            });
+            }
+
+            if (AdimliDurulma)
+            {
+                // GDD 7.3.2: kazanma başladıktan sonra oyuncu hamle yapamaz. Sayaç 0'a indiyse hamle kalmamıştır;
+                // "hamle bitti" akışı tahta durulunca başlar (7.4.1).
+                if (Hedefler.HepsiTamam || KalanHamle == 0)
+                {
+                    return HamleSonucu.Reddedildi;
+                }
+
+                // GDD 2.3.9 bir öneridir (11.2.27): bayrak kapalıysa düşme ve kaskad sürerken hamle kabul edilmez.
+                if (DurulmaSuruyor && !Baglam.Bayraklar.DusmeSirasindaHamle)
+                {
+                    return HamleSonucu.Reddedildi;
+                }
+
+                // GDD 11.3.1: oyuncu hamlesi önce işlenir; kaskad bir sonraki adıma kalır.
+                var motor = _surenMotor ?? new EtkiMotoru(Baglam, olaylar);
+                motor.OlaylariBagla(olaylar);
+                var adimliSonuc = calistir(SayaciDusur, HamleKapsami.Adimli, motor);
+                if (adimliSonuc == HamleSonucu.Gecerli)
+                {
+                    _surenMotor = motor;
+                    _bekleyenOyuncuHamlesi = true;
+                    DolumuDoldur(olaylar, ilkOlay);
+                }
+
+                return adimliSonuc;
+            }
+
+            var sonuc = calistir(SayaciDusur, Kapsam, null);
 
             if (sonuc == HamleSonucu.Gecerli)
             {
@@ -112,12 +176,44 @@ namespace CatRoyal.Cekirdek.Bolum
         }
 
         /// <summary>
+        /// Adımlı durulmanın (GDD 2.3.9) bir adımı: bekleyen küreler, tek düşme güncellemesi, toplama ya da kaskad.
+        /// Tahta durulduğunda karıştırma denetimi ve hamle sonu akışı (5.7 adım 9–11) çalışır.
+        /// </summary>
+        /// <returns>Durulma sürüyorsa true; tahta durulduysa ya da süren bir durulma yoksa false.</returns>
+        public bool Ilerle(List<Olay> olaylar)
+        {
+            if (_surenMotor == null)
+            {
+                return false;
+            }
+
+            int ilkOlay = olaylar.Count;
+            _surenMotor.OlaylariBagla(olaylar);
+            if (TahtaDongusu.Adim(Baglam, _surenMotor, olaylar, dusme: true, tekGuncelleme: true))
+            {
+                DolumuDoldur(olaylar, ilkOlay);
+                return true;
+            }
+
+            _surenMotor = null;
+            bool oyuncuHamlesi = _bekleyenOyuncuHamlesi;
+            _bekleyenOyuncuHamlesi = false;
+            if (Kapsam == HamleKapsami.Tam)
+            {
+                Karistirici.GerekirseKaristir(Baglam, olaylar);
+            }
+
+            HamleSonrasi(olaylar, ilkOlay, oyuncuHamlesi);
+            return false;
+        }
+
+        /// <summary>
         /// GDD 5.6.1, 5.7 adım 9: tahta durulduğunda olası hamle yoksa karıştırma başlar; başarısız olursa
         /// "olası hamle yok" akışı çalışır (7.5.1, AK-13). Bölüm başında ve durum testlerinde doğrudan çağrılır.
         /// </summary>
         public KaristirmaSonucu OlasiHamleyiDenetle(List<Olay> olaylar)
         {
-            if (Durum != BolumDurumu.Oynaniyor)
+            if (Durum != BolumDurumu.Oynaniyor || DurulmaSuruyor)
             {
                 return KaristirmaSonucu.Gerekmedi;
             }
@@ -163,6 +259,8 @@ namespace CatRoyal.Cekirdek.Bolum
         /// <summary>Kazanma (7.3) ve "olası hamle yok" akışının sonucu (7.5, AK-13).</summary>
         private bool BolumBittiMi(List<Olay> olaylar, int ilkOlay)
         {
+            EkranlariIlerlet(olaylar);
+
             // AK-02 (1)–(2): son hamlenin bütün patlamaları, düşmeleri ve kaskadları bitti; bu sürede hedefler
             // tamamlandıysa sonuç kazanmadır. GDD 7.3.3: kalan hamleler artan hamle ödülüne gider.
             if (Hedefler.HepsiTamam)
@@ -195,6 +293,112 @@ namespace CatRoyal.Cekirdek.Bolum
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// GDD 8.9.1, 8.9.2: geçerli ekranın hedefleri tamamlanınca bir sonraki ekrana geçilir. Üst ekranda kalan,
+        /// düşebilen bütün taşlar (normal, özel, düşen engel) alt ekranın giriş sırasına eklenir; her sütunda alttaki
+        /// taş önce girer (5.1.3). Düşmeyen engeller ve katmanlar üst ekranda kalır. Alt ekranda o sütunun girişi
+        /// yoksa taşlar kullanılmaz. Yeni ekranın girişleri açılır (5.3.3) ve tahta durulur.
+        /// </summary>
+        private void EkranlariIlerlet(List<Olay> olaylar)
+        {
+            while (EkranKurucu != null
+                && !Hedefler.HepsiTamam
+                && Hedefler.EkranTamam
+                && Hedefler.GecerliEkran < EkranSayisi)
+            {
+                var eski = Baglam.Tahta;
+                var sira = new Dictionary<int, Queue<Tas>>();
+                int aktarilan = 0;
+                for (int sutun = 1; sutun <= eski.SutunSayisi; sutun++)
+                {
+                    var kuyruk = new Queue<Tas>();
+                    for (int satir = eski.SatirSayisi; satir >= 1; satir--)
+                    {
+                        var konum = new Konum(satir, sutun);
+                        if (eski.Duser(konum))
+                        {
+                            kuyruk.Enqueue(eski[konum].Tas!);
+                            aktarilan++;
+                        }
+                    }
+
+                    sira.Add(sutun, kuyruk);
+                }
+
+                var rastgeleHucreler = new List<Konum>();
+                var yeni = EkranKurucu(Hedefler.GecerliEkran + 1, eski, rastgeleHucreler);
+                Baglam.Tahta = yeni;
+
+                // GDD 5.3.4 adım 1: üst ekrandan kalan taşlar asıl dolgunun önüne geçer.
+                var asil = Baglam.Dolgu is UstEkranKuyrugu onceki ? onceki.Asil : Baglam.Dolgu;
+                Baglam.Dolgu = new UstEkranKuyrugu(asil, sira);
+
+                // GDD 5.4.1–5.4.3: rastgele hücreler hazır 3'lü ve kare oluşturmadan renklendirilir. Olası hamle
+                // denetimi (5.4.4) boş hücreler dolduktan sonra, durulmanın sonunda yapılır.
+                BaslangicTahtasi.RenkleriDagit(Baglam, rastgeleHucreler, null);
+                Hedefler.SonrakiEkranaGec(yeni);
+                olaylar.Add(new EkranDegisti(Hedefler.GecerliEkran, aktarilan));
+                TahtayiDurult(new EtkiMotoru(Baglam, olaylar), olaylar);
+            }
+        }
+
+        // ------------------------------------------------------------------ Artan hamle gösterisi (GDD 7.6.2, 7.6.3)
+
+        /// <summary>
+        /// Kazanılan bölümde kalan her hamle için tahtadaki rastgele bir normal taş çizgi taşına dönüşür (yönü
+        /// rastgele); sonra taşlar dönüşüm sırasıyla patlar ve tahta bir kez durulur. Normal taş yetmezse olan kadarı
+        /// dönüşür. Patlamalar hedef saymaz (hedefler zaten tamamdır) ve dolum göstergesini doldurmaz. Oyuncu gösteriyi
+        /// atlarsa (<paramref name="atla"/>) tahta değişmez. Sonunda "artan hamleler bitti" bilgisi gönderilir (7.6.3).
+        /// Kalan hamle sayısı değişmez; para ödülü ondan hesaplanır (7.6.1).
+        /// </summary>
+        /// <returns>Bilgi bu çağrıda gönderildiyse true; bölüm kazanılmadıysa ya da daha önce gönderildiyse false.</returns>
+        public bool ArtanHamleGosterisi(List<Olay> olaylar, bool atla = false)
+        {
+            if (Durum != BolumDurumu.Kazanildi || ArtanHamlelerBildirildi)
+            {
+                return false;
+            }
+
+            ArtanHamlelerBildirildi = true;
+            if (!atla && KalanHamle > 0)
+            {
+                var tahta = Baglam.Tahta;
+                olaylar.Add(new ArtanHamleGosterisiBasladi(KalanHamle));
+
+                var adaylar = tahta.TumKonumlar()
+                    .Where(k => tahta.Kaydirilabilir(k) && tahta[k].Tas!.Tur == TasTuru.Normal && tahta[k].UstKatman == null)
+                    .ToList();
+                Baglam.Rastgele.Karistir(adaylar);
+
+                var donusenler = new List<KeyValuePair<Konum, Tas>>();
+                foreach (var konum in adaylar.Take(KalanHamle))
+                {
+                    var eski = tahta[konum].Tas!;
+                    var cizgi = tahta.OzelTasUret(TasTuru.Cizgi, Baglam.Rastgele.Sonraki(2) == 0 ? Yon.Yatay : Yon.Dikey);
+                    cizgi.OturmaAdimi = eski.OturmaAdimi;
+                    tahta[konum].Tas = cizgi;
+                    olaylar.Add(new TasDonustu(konum, eski, cizgi, Baglam.Saat));
+                    donusenler.Add(new KeyValuePair<Konum, Tas>(konum, cizgi));
+                }
+
+                var motor = new EtkiMotoru(Baglam, olaylar);
+                foreach (var cift in donusenler)
+                {
+                    // Önceki bir patlamanın zincirle tetiklediği ya da kırdığı taş yeniden etkinleşmez.
+                    if (ReferenceEquals(tahta[cift.Key].Tas, cift.Value) && !cift.Value.Tetiklendi)
+                    {
+                        motor.OzelTasiEtkinlestir(cift.Key, Tetik.Dokunma);
+                        motor.DalgayiBitir();
+                    }
+                }
+
+                TahtaDongusu.Durult(Baglam, motor, olaylar);
+            }
+
+            olaylar.Add(new ArtanHamlelerBitti(KalanHamle, atla));
+            return true;
         }
 
         private bool HamleSonuHareketlileriGuncelle(List<Olay> olaylar)
@@ -393,7 +597,7 @@ namespace CatRoyal.Cekirdek.Bolum
         /// </summary>
         public bool AracKullan(AracTuru tur, Konum? konum, List<Olay> olaylar)
         {
-            if (Durum != BolumDurumu.Oynaniyor)
+            if (Durum != BolumDurumu.Oynaniyor || DurulmaSuruyor)
             {
                 return false;
             }

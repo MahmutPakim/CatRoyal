@@ -175,6 +175,7 @@ ek_hamle_artis_siniri,denge,Artışın durduğu başarısızlık sayısı,8,5–
 ek_hamle_reklam_sayisi,denge,Reklam izleyince verilen ek hamle,3,1–5,hamle,Düşük; kendi tasarımın.,"9.12.4, 9.13.1"
 ikinci_uyari_son_bolum,denge,Teklif reddinde ikinci uyarının gösterildiği son bölüm,80,50–150,bölüm,Orta; değer kendi tasarımın.,9.12.5
 reklam_para_odulu,denge,Ödüllü reklamın verdiği para,50,20–100,para,Düşük; kendi tasarımın.,9.13.1
+reklam_can_odulu,denge,Ödüllü reklamın verdiği can,1,1–3,can,Düşük; kendi tasarımın.,9.13.1
 acilis_hiz_yarisi,denge,Hız yarışı olayının açıldığı bölüm,34,20–50,bölüm,Yüksek; değer kendi tasarımın.,"10.1.1, 9.4"
 hiz_yarisi_grup_boyutu,denge,Hız yarışı grubundaki oyuncu sayısı,6,4–10,oyuncu,Yüksek (küçük grup); değer kendi tasarımın.,10.1.2
 hiz_yarisi_asgari_kalan_dk,denge,Hız yarışına katılmak için olayda kalması gereken asgari süre,10,5–20,dakika,Orta; değer kendi tasarımın.,10.1.2

@@ -112,15 +112,28 @@ namespace CatRoyal.Cekirdek.Veri
         /// <param name="tohum">Rastgelelik tohumu; aynı tohum aynı bölümü verir.</param>
         /// <param name="olaylar">Kurulum sırasında üretilen olaylar (ilk düşmeler).</param>
         /// <param name="zorlukAgirligi">Zorluk ağırlıklı üretecin ağırlığı (GDD 9.11.5); 0 etkisizdir.</param>
+        /// <param name="hamleEki">
+        /// Yarışmalı bölümde yarışma sisteminden gelen ve hamle sayısına eklenen değer (GDD 7.2.5, 9.11.2); negatif
+        /// olabilir, hamle sayısı 1'in altına inmez. Normal ilerleme bölümlerinde 0'dır.
+        /// </param>
         public static BolumOturumu Kur(
             BolumVerisi veri,
             AkBayraklari bayraklar,
             ParametreTablosu parametreler,
             ulong tohum,
             List<Olay> olaylar,
-            double zorlukAgirligi = 0)
+            double zorlukAgirligi = 0,
+            int hamleEki = 0)
         {
-            var tahta = new Tahta(veri.Yukseklik, veri.Genislik);
+            if (veri.Ekranlar.Count == 0)
+            {
+                throw new BolumVerisiHatasi($"Bölüm {veri.Kimlik}: ekran tanımı yok; veri BolumYukleyici ile okunmalı.");
+            }
+
+            // GDD 2.1.7: oyuncu bir anda yalnızca bir ekranı oynar; her ekran kendi tahtasıdır, böylece hiçbir etki,
+            // eşleşme ya da düşme ekran sınırını aşmaz (8.9.3).
+            var rastgeleHucreler = new List<Konum>();
+            var tahta = EkranTahtasiKur(veri, 1, null, rastgeleHucreler);
             var rastgele = new TohumluRastgele(tohum);
             var dolgu = new RastgeleDolgu();
             var baglam = new OyunBaglami(tahta, bayraklar, parametreler, rastgele)
@@ -131,37 +144,6 @@ namespace CatRoyal.Cekirdek.Veri
                 CaprazKaymaIzinli = veri.CaprazKaymaIzinli,
                 Dolgu = dolgu,
             };
-
-            var rastgeleHucreler = new List<Konum>();
-            foreach (var konum in tahta.TumKonumlar())
-            {
-                var hucre = tahta[konum];
-                var icerik = IcerikCoz(veri, veri.Hucreler[konum.Satir - 1][konum.Sutun - 1], $"hücre {konum}");
-                hucre.Oynanabilir = !icerik.Oynanmayan;
-                hucre.Tas = icerik.TasUret(tahta);
-                if (icerik.RastgeleRenk)
-                {
-                    rastgeleHucreler.Add(konum);
-                }
-
-                string? alt = veri.AltKatmanlar?[konum.Satir - 1][konum.Sutun - 1];
-                if (alt != null && alt != ".")
-                {
-                    hucre.AltKatman = KatmanCoz(veri, alt, $"hücre {konum}");
-                }
-
-                string? ust = veri.UstKatmanlar?[konum.Satir - 1][konum.Sutun - 1];
-                if (ust != null && ust != ".")
-                {
-                    hucre.UstKatman = KatmanCoz(veri, ust, $"hücre {konum}");
-                }
-            }
-
-            GirisleriIsaretle(veri, tahta);
-            foreach (var konum in veri.ToplamaHucreleri)
-            {
-                tahta[konum].Toplama = true;
-            }
 
             foreach (var cift in veri.OnTanimliDolgu)
             {
@@ -185,7 +167,12 @@ namespace CatRoyal.Cekirdek.Veri
             // GDD 5.4: rastgele bırakılan hücreler hazır 3'lü ve kare oluşturmadan renklendirilir.
             BaslangicTahtasi.Uret(baglam, rastgeleHucreler);
 
-            var oturum = new BolumOturumu(baglam, veri.Hamle, veri.Hedefler);
+            var oturum = new BolumOturumu(baglam, hamleEki == 0 ? veri.Hamle : Math.Max(1, veri.Hamle + hamleEki), veri.Hedefler);
+            if (veri.Ekranlar.Count > 1)
+            {
+                oturum.EkranSayisi = veri.Ekranlar.Count;
+                oturum.EkranKurucu = (ekran, onceki, hucreler) => EkranTahtasiKur(veri, ekran, onceki, hucreler);
+            }
 
             // GDD 2.1.5: boş başlayan hücreler bölüm başında düşmeyle dolar.
             TahtaDongusu.Durult(baglam, new EtkiMotoru(baglam, olaylar), olaylar);
@@ -194,16 +181,68 @@ namespace CatRoyal.Cekirdek.Veri
         }
 
         /// <summary>
-        /// GDD 2.1.6, 8.1.6: giriş hücreleri bölüm verisinde hücre başına işaretlenir; harita verilmezse her sütunun
-        /// en üstteki oynanabilir hücresi giriştir.
+        /// Bir ekranın tahtasını bölüm verisinin o ekrana düşen satırlarından kurar (GDD 8.9.1). Tahtanın 1. satırı
+        /// ekranın en üst satırıdır. Rastgele renklendirilecek hücreler listeye eklenir.
         /// </summary>
-        private static void GirisleriIsaretle(BolumVerisi veri, Tahta tahta)
+        private static Tahta EkranTahtasiKur(BolumVerisi veri, int ekran, Tahta? onceki, List<Konum> rastgeleHucreler)
+        {
+            var aralik = veri.Ekranlar[ekran - 1];
+            int kayma = aralik.IlkSatir - 1;
+            var tahta = new Tahta(aralik.Yukseklik, veri.Genislik);
+            if (onceki != null)
+            {
+                tahta.KimlikSayaciniDevral(onceki);
+            }
+
+            foreach (var konum in tahta.TumKonumlar())
+            {
+                int s = kayma + konum.Satir - 1;
+                int t = konum.Sutun - 1;
+                var hucre = tahta[konum];
+                var icerik = IcerikCoz(veri, veri.Hucreler[s][t], $"hücre {new Konum(s + 1, t + 1)}");
+                hucre.Oynanabilir = !icerik.Oynanmayan;
+                hucre.Tas = icerik.TasUret(tahta);
+                if (icerik.RastgeleRenk)
+                {
+                    rastgeleHucreler.Add(konum);
+                }
+
+                string? alt = veri.AltKatmanlar?[s][t];
+                if (alt != null && alt != ".")
+                {
+                    hucre.AltKatman = KatmanCoz(veri, alt, $"hücre {new Konum(s + 1, t + 1)}");
+                }
+
+                string? ust = veri.UstKatmanlar?[s][t];
+                if (ust != null && ust != ".")
+                {
+                    hucre.UstKatman = KatmanCoz(veri, ust, $"hücre {new Konum(s + 1, t + 1)}");
+                }
+            }
+
+            GirisleriIsaretle(veri, tahta, kayma);
+            foreach (var konum in veri.ToplamaHucreleri)
+            {
+                if (konum.Satir >= aralik.IlkSatir && konum.Satir <= aralik.SonSatir)
+                {
+                    tahta[new Konum(konum.Satir - kayma, konum.Sutun)].Toplama = true;
+                }
+            }
+
+            return tahta;
+        }
+
+        /// <summary>
+        /// GDD 2.1.6, 8.1.6: giriş hücreleri bölüm verisinde hücre başına işaretlenir; harita verilmezse her sütunun
+        /// (o ekrandaki) en üstteki oynanabilir hücresi giriştir.
+        /// </summary>
+        private static void GirisleriIsaretle(BolumVerisi veri, Tahta tahta, int kayma)
         {
             if (veri.Girisler != null)
             {
                 foreach (var konum in tahta.TumKonumlar())
                 {
-                    bool giris = veri.Girisler[konum.Satir - 1][konum.Sutun - 1];
+                    bool giris = veri.Girisler[kayma + konum.Satir - 1][konum.Sutun - 1];
                     if (giris && !tahta[konum].Oynanabilir)
                     {
                         throw new BolumVerisiHatasi($"hücre {konum}: oynanmayan hücre giriş taşıyamaz (GDD 2.1.3).");

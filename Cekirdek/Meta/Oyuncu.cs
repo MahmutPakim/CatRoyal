@@ -26,6 +26,7 @@ namespace CatRoyal.Cekirdek.Meta
             Carpan = new CarpanSistemi(parametreler);
             Zorluk = new YariDinamikZorluk(parametreler);
             Alan = new AlanInsasi(parametreler);
+            Album = new Album(parametreler);
         }
 
         public ParametreTablosu Parametreler { get; }
@@ -40,6 +41,7 @@ namespace CatRoyal.Cekirdek.Meta
         public CarpanSistemi Carpan { get; }
         public YariDinamikZorluk Zorluk { get; }
         public AlanInsasi Alan { get; }
+        public Album Album { get; }
 
         /// <summary>Oyuncunun ulaştığı en yüksek bölüm; kapılar buna göre değerlendirilir (GDD 9.4.2).</summary>
         public int EnYuksekBolum { get; set; } = 1;
@@ -52,6 +54,12 @@ namespace CatRoyal.Cekirdek.Meta
         public bool SezonHattiAcik => Kapilar.Acik(MetaParametreAdlari.AcilisSezonHatti, EnYuksekBolum);
 
         public bool HaftalikHatAcik => Kapilar.Acik(MetaParametreAdlari.AcilisHaftalikHat, EnYuksekBolum);
+
+        /// <summary>Bölüm öncesinde çarpan düzeyi seçilebilir mi (GDD 9.10.5)?</summary>
+        public bool CarpanSecimiAcik => Kapilar.Acik(MetaParametreAdlari.AcilisCarpanSecimi, EnYuksekBolum);
+
+        /// <summary>Yarışmalı bölümler açıldı mı (GDD 9.11.2, 9.4)?</summary>
+        public bool YarismaliBolumlerAcik => Kapilar.Acik(MetaParametreAdlari.AcilisYarismaliBolumler, EnYuksekBolum);
 
         /// <summary>Çift renk takviyesi kazanma serisiyle kazanılır (GDD 3.6.7, 9.3.8).</summary>
         public bool CiftRenkTakviyesiHazir =>
@@ -116,7 +124,52 @@ namespace CatRoyal.Cekirdek.Meta
             }
         }
 
+        // ------------------------------------------------------------------ Reklam ödülleri (GDD 9.13)
+
+        /// <summary>
+        /// Ödüllü reklam izlendi: can verilir (GDD 9.1.6, 9.13.1; parametre: reklam_can_odulu). Azami can aşılmaz.
+        /// Reklamın gösterilmesi ve izlenip izlenmediği çekirdeğin dışındadır; bu yöntem izleme bitince çağrılır.
+        /// </summary>
+        public void ReklamCaniVer(DateTime simdi) =>
+            Can.CanEkle(Parametreler.TamSayi(MetaParametreAdlari.ReklamCanOdulu), simdi);
+
+        /// <summary>Ödüllü reklam izlendi: para verilir (GDD 9.13.1; parametre: reklam_para_odulu).</summary>
+        public void ReklamParasiVer() => Cuzdan.Ekle(Parametreler.TamSayi(MetaParametreAdlari.ReklamParaOdulu));
+
+        // ------------------------------------------------------------------ Diğer meta özellikler (GDD 9.15)
+
+        /// <summary>Sosyal hesap bağlandı mı (GDD 9.15.2)?</summary>
+        public bool HesapBagli { get; private set; }
+
+        /// <summary>Sosyal hesap bağlayan oyuncuya bir kerelik para verilir (GDD 9.2.3, 9.15.2).</summary>
+        /// <returns>Ödül bu çağrıda verildiyse true; hesap zaten bağlıysa false.</returns>
+        public bool HesapBagla()
+        {
+            if (HesapBagli)
+            {
+                return false;
+            }
+
+            HesapBagli = true;
+            Cuzdan.Ekle(Parametreler.TamSayi(MetaParametreAdlari.HesapBaglamaOdulu));
+            return true;
+        }
+
+        /// <summary>Haftalık liderlik tablosu, arkadaş daveti ve görevlerin kapıları (GDD 9.15.3, 9.4).</summary>
+        public bool LiderlikTablosuAcik => Kapilar.Acik(MetaParametreAdlari.AcilisLiderlikTablosu, EnYuksekBolum);
+
+        public bool ArkadasDavetiAcik => Kapilar.Acik(MetaParametreAdlari.AcilisArkadasDaveti, EnYuksekBolum);
+
+        public bool GorevlerAcik => Kapilar.Acik(MetaParametreAdlari.AcilisGorevler, EnYuksekBolum);
+
         internal void KazanimKaydet() => KazanmaSerisi++;
+
+        /// <summary>Kayıttan yükleme (<see cref="OyuncuKaydi"/>).</summary>
+        internal void TemelDurumuYukle(int kazanmaSerisi, bool hesapBagli)
+        {
+            KazanmaSerisi = Math.Max(0, kazanmaSerisi);
+            HesapBagli = hesapBagli;
+        }
 
         internal void KayipKaydet() => KazanmaSerisi = 0;
     }
@@ -148,6 +201,7 @@ namespace CatRoyal.Cekirdek.Meta
         private readonly EkHamleTeklifi _teklif;
         private int _carpanIsareti = 1;
         private bool _sonucIslendi;
+        private bool _ilkOynayis;
 
         public BolumAkisi(Oyuncu oyuncu, ZorlukEtiketTablosu etiketler, int bolum)
         {
@@ -166,6 +220,16 @@ namespace CatRoyal.Cekirdek.Meta
 
         /// <summary>Kurtarma bölümünde başarısızlıkta can düşmez (GDD 10.2.8).</summary>
         public bool KayiptaCanDusmez { get; set; }
+
+        /// <summary>
+        /// Yarışmalı bölümde yarışma sisteminden gelen ve hamle sayısına eklenen değer (GDD 9.11.2). Yalnızca
+        /// yarışmalı bölümler açıkken uygulanır; normal ilerleme bölümlerinde null kalır ve hamle sayısı bölüm
+        /// verisindeki gibidir. Değerin formülü yarışma sistemindedir (11.2.20).
+        /// </summary>
+        public int? YarismaHamleEki { get; set; }
+
+        /// <summary>Bu bölüm yarışmalı bölüm olarak mı oynanıyor?</summary>
+        public bool Yarismali => YarismaHamleEki.HasValue && _oyuncu.YarismaliBolumlerAcik;
 
         public ZorlukEtiketi Etiket => _etiketler.Etiket(Bolum);
 
@@ -191,9 +255,12 @@ namespace CatRoyal.Cekirdek.Meta
             }
 
             var p = _oyuncu.Parametreler;
-            _carpanIsareti = _oyuncu.Carpan.BolumeGir(simdi);
+            _carpanIsareti = _oyuncu.Carpan.BolumeGir(simdi, _oyuncu.CarpanSecimiAcik);
+            _ilkOynayis = Bolum >= _oyuncu.EnYuksekBolum;
 
-            var oturum = BolumKurucu.Kur(veri, bayraklar, p, tohum, olaylar, _oyuncu.Zorluk.RastgelelikAgirligi(Etiket));
+            var oturum = BolumKurucu.Kur(
+                veri, bayraklar, p, tohum, olaylar, _oyuncu.Zorluk.RastgelelikAgirligi(Etiket),
+                Yarismali ? YarismaHamleEki!.Value : 0);
             oturum.DolumGostergesiAcik = _oyuncu.Kapilar.Acik(MetaParametreAdlari.AcilisDolumGostergesi, _oyuncu.EnYuksekBolum);
             oturum.YedekHamleHakki = _oyuncu.YedekHamleHakkiHazir;
 
@@ -308,6 +375,21 @@ namespace CatRoyal.Cekirdek.Meta
         }
 
         /// <summary>
+        /// Reklam izleyerek ek hamle alınır (GDD 9.12.4, 9.13.1; parametre: ek_hamle_reklam_sayisi). Para harcanmaz ve
+        /// fiyat kademesi ilerlemez; bölüm aynı tahtayla sürer (7.4.3). İzleme bitince çağrılır.
+        /// </summary>
+        public bool ReklamlaEkHamleAl(List<Olay> olaylar)
+        {
+            if (Oturum == null || Oturum.Durum != BolumDurumu.EkHamleTeklifi)
+            {
+                return false;
+            }
+
+            Oturum.EkHamleTeklifiniKabulEt(olaylar, _oyuncu.Parametreler.TamSayi(MetaParametreAdlari.EkHamleReklamSayisi));
+            return true;
+        }
+
+        /// <summary>
         /// Bölümün meta sonucunu işler. Kazanınca: para (GDD 9.2.2), yıldız (9.6.1), hat puanları (9.8.4, 9.9.3),
         /// seri ve deneme sayacı. Kaybedince: bir can düşer (7.4.4, 9.1.3), seri sıfırlanır, deneme sayacı artar.
         /// Başlamış bir bölümden çıkmak da kayıp sayılır (9.1.3): <paramref name="cikildi"/> true verilir.
@@ -348,7 +430,7 @@ namespace CatRoyal.Cekirdek.Meta
                 }
 
                 _oyuncu.KazanimKaydet();
-                _oyuncu.Zorluk.KazanimKaydet(Bolum);
+                _oyuncu.Zorluk.KazanimKaydet(Bolum, _ilkOynayis && !Yarismali);
                 _teklif.Sifirla();
                 if (Bolum >= _oyuncu.EnYuksekBolum)
                 {
@@ -369,7 +451,7 @@ namespace CatRoyal.Cekirdek.Meta
                 }
 
                 _oyuncu.KayipKaydet();
-                _oyuncu.Zorluk.BasarisizlikKaydet(Bolum);
+                _oyuncu.Zorluk.BasarisizlikKaydet(Bolum, _ilkOynayis && !Yarismali);
                 _teklif.Sifirla();
             }
 

@@ -54,6 +54,17 @@ namespace CatRoyal.Cekirdek.Meta
         public Dictionary<string, int> AlbumEsyalari { get; } = new Dictionary<string, int>();
 
         public List<string> Kozmetikler { get; } = new List<string>();
+
+        /// <summary>
+        /// Sıralamalı yarışma ödülü (yarışmalı bölümler ve sıralamalı yarışma olayları) sınırsız can içeriyorsa
+        /// süresi parametre: hediye_sinirsiz_can_dk kadardır (GDD 9.1.9). Diğer ödüllerdeki süreler kendi ödül
+        /// tablolarında yazılır ve <see cref="SinirsizCanDakika"/> doğrudan verilir.
+        /// </summary>
+        public OdulPaketi YarismaSinirsizCaniEkle(CatRoyal.Cekirdek.Yapilandirma.ParametreTablosu parametreler)
+        {
+            SinirsizCanDakika += parametreler.TamSayi(MetaParametreAdlari.HediyeSinirsizCanDk);
+            return this;
+        }
     }
 
     /// <summary>Çekirdek parametre tablosunda meta katmanın okuduğu adlar.</summary>
@@ -136,5 +147,21 @@ namespace CatRoyal.Cekirdek.Meta
         public const string ToplamaOlayiBasamakSayisi = "toplama_olayi_basamak_sayisi";
         public const string RiskBasamakHedefleri = "risk_basamak_hedefleri";
         public const string RiskBasamakSansHakki = "risk_basamak_sans_hakki";
+        public const string ReklamParaOdulu = "reklam_para_odulu";
+        public const string ReklamCanOdulu = "reklam_can_odulu";
+        public const string EkHamleReklamSayisi = "ek_hamle_reklam_sayisi";
+        public const string AcilisMagaza = "acilis_magaza";
+        public const string MagazaUrunSayisi = "magaza_urun_sayisi";
+        public const string AcilisKademeliTeklif = "acilis_kademeli_teklif";
+        public const string AcilisKarsilamaHediyesi = "acilis_karsilama_hediyesi";
+        public const string HesapBaglamaOdulu = "hesap_baglama_odulu";
+        public const string AcilisLiderlikTablosu = "acilis_liderlik_tablosu";
+        public const string AcilisArkadasDaveti = "acilis_arkadas_daveti";
+        public const string AcilisGorevler = "acilis_gorevler";
+        public const string AcilisCarpanSecimi = "acilis_carpan_secimi";
+        public const string AcilisYarismaliBolumler = "acilis_yarismali_bolumler";
+        public const string HediyeSinirsizCanDk = "hediye_sinirsiz_can_dk";
+        public const string BeceriOlcumSonBolum = "beceri_olcum_son_bolum";
+        public const string BeceriEsikleri = "beceri_esikleri";
     }
 }

@@ -577,5 +577,178 @@ namespace CatRoyal.Cekirdek.Testler.Kurallar
             olay.BolumKaybedildi();
             Assert.That(olay.SansHakki, Is.EqualTo(hak));
         }
+
+        // ------------------------------------------------------------------ Reklam ödülleri (9.13)
+
+        [Test]
+        [Property("GDD", "9.13.1, 9.1.6")]
+        public void Reklam_can_ve_para_verir_azami_can_asilmaz()
+        {
+            var oyuncu = new Oyuncu(P, Simdi);
+            int azami = oyuncu.Can.Mevcut(Simdi);
+            oyuncu.Can.CanAyarla(1, Simdi);
+            int bakiye = oyuncu.Cuzdan.Bakiye;
+
+            oyuncu.ReklamCaniVer(Simdi);
+            oyuncu.ReklamParasiVer();
+
+            Assert.That(oyuncu.Can.Mevcut(Simdi), Is.EqualTo(1 + P.TamSayi(MetaParametreAdlari.ReklamCanOdulu)));
+            Assert.That(oyuncu.Cuzdan.Bakiye, Is.EqualTo(bakiye + P.TamSayi(MetaParametreAdlari.ReklamParaOdulu)));
+
+            for (int i = 0; i < azami + 2; i++)
+            {
+                oyuncu.ReklamCaniVer(Simdi);
+            }
+
+            Assert.That(oyuncu.Can.Mevcut(Simdi), Is.EqualTo(azami));
+        }
+
+        [Test]
+        [Property("GDD", "9.12.4, 9.13.1, 7.4.3")]
+        public void Reklamla_ek_hamle_alinir_para_harcanmaz_ve_fiyat_kademesi_ilerlemez()
+        {
+            var oyuncu = new Oyuncu(P, Simdi) { EnYuksekBolum = 20 };
+            var olaylar = new List<Olay>();
+            var akis = TeklifeKadarOyna(oyuncu, olaylar);
+            Assert.That(akis.ReklamlaEkHamleAl(olaylar), Is.False, "Açık teklif yokken reklamla hamle alınmaz.");
+
+            akis.Oturum!.Kaydir(TahtaKurucu.H(1, 4), TahtaKurucu.H(1, 3), olaylar);
+            Assert.That(akis.Oturum.Durum, Is.EqualTo(BolumDurumu.EkHamleTeklifi));
+            int bakiye = oyuncu.Cuzdan.Bakiye;
+            int fiyat = akis.TeklifFiyati;
+
+            Assert.That(akis.ReklamlaEkHamleAl(olaylar), Is.True);
+
+            Assert.That(akis.Oturum.Durum, Is.EqualTo(BolumDurumu.Oynaniyor));
+            Assert.That(akis.Oturum.KalanHamle, Is.EqualTo(P.TamSayi(MetaParametreAdlari.EkHamleReklamSayisi)));
+            Assert.That(oyuncu.Cuzdan.Bakiye, Is.EqualTo(bakiye));
+            Assert.That(akis.TeklifFiyati, Is.EqualTo(fiyat));
+        }
+
+        // ------------------------------------------------------------------ Mağaza ve teklifler (9.14)
+
+        private static MagazaUrunu Urun(string kimlik, int para) => new MagazaUrunu(kimlik, new OdulPaketi { Para = para });
+
+        [Test]
+        [Property("GDD", "9.14.1, 9.14.3")]
+        public void Para_magazasi_kapisindan_sonra_acilir_sabit_sayida_urun_gosterir_ve_paketi_dogrudan_verir()
+        {
+            int acilis = P.TamSayi(MetaParametreAdlari.AcilisMagaza);
+            int adet = P.TamSayi(MetaParametreAdlari.MagazaUrunSayisi);
+            var oyuncu = new Oyuncu(P, Simdi) { EnYuksekBolum = acilis - 1 };
+            var magaza = new ParaMagazasi(P, oyuncu.Kapilar);
+            magaza.UrunleriAyarla(Enumerable.Range(1, adet + 3).Select(i => Urun("urun" + i, i * 100)));
+
+            Assert.That(magaza.Acik(oyuncu.EnYuksekBolum), Is.False);
+            Assert.That(magaza.GorunenUrunler(oyuncu.EnYuksekBolum), Is.Empty);
+            Assert.That(magaza.SatinAlimTamamlandi(oyuncu, "urun1", Simdi), Is.False);
+
+            oyuncu.EnYuksekBolum = acilis;
+            Assert.That(magaza.GorunenUrunler(oyuncu.EnYuksekBolum).Select(u => u.Kimlik),
+                Is.EqualTo(Enumerable.Range(1, adet).Select(i => "urun" + i)));
+
+            int bakiye = oyuncu.Cuzdan.Bakiye;
+            Assert.That(magaza.SatinAlimTamamlandi(oyuncu, "urun2", Simdi), Is.True);
+            Assert.That(oyuncu.Cuzdan.Bakiye, Is.EqualTo(bakiye + 200));
+            Assert.That(oyuncu.Cuzdan.Harcamalar, Is.Empty, "Gerçek para satın alımı oyun parası harcamaz.");
+            Assert.That(magaza.SatinAlimTamamlandi(oyuncu, "urun" + (adet + 1), Simdi), Is.False, "Gösterilmeyen ürün alınamaz.");
+        }
+
+        [Test]
+        [Property("GDD", "9.14.2")]
+        public void Kademeli_teklifin_basamaklari_sirayla_acilir()
+        {
+            int acilis = P.TamSayi(MetaParametreAdlari.AcilisKademeliTeklif);
+            var oyuncu = new Oyuncu(P, Simdi) { EnYuksekBolum = acilis - 1 };
+            var teklif = new KademeliTeklif(oyuncu.Kapilar, new[] { Urun("b1", 100), Urun("b2", 300), Urun("b3", 900) });
+
+            Assert.That(teklif.AcikBasamak(oyuncu.EnYuksekBolum), Is.Null);
+            Assert.That(teklif.SatinAlimTamamlandi(oyuncu, Simdi), Is.False);
+
+            oyuncu.EnYuksekBolum = acilis;
+            int bakiye = oyuncu.Cuzdan.Bakiye;
+            foreach (var (kimlik, para) in new[] { ("b1", 100), ("b2", 300), ("b3", 900) })
+            {
+                Assert.That(teklif.AcikBasamak(oyuncu.EnYuksekBolum)!.Kimlik, Is.EqualTo(kimlik));
+                Assert.That(teklif.SatinAlimTamamlandi(oyuncu, Simdi), Is.True);
+                bakiye += para;
+                Assert.That(oyuncu.Cuzdan.Bakiye, Is.EqualTo(bakiye));
+            }
+
+            Assert.That(teklif.Bitti, Is.True);
+            Assert.That(teklif.AcikBasamak(oyuncu.EnYuksekBolum), Is.Null);
+            Assert.That(teklif.SatinAlimTamamlandi(oyuncu, Simdi), Is.False);
+        }
+
+        [Test]
+        [Property("GDD", "9.14.2")]
+        public void Donemsel_teklif_yalniz_doneminde_ve_magaza_kapisi_acikken_gecerlidir()
+        {
+            int acilis = P.TamSayi(MetaParametreAdlari.AcilisMagaza);
+            var oyuncu = new Oyuncu(P, Simdi) { EnYuksekBolum = acilis };
+            var teklif = new DonemselTeklif(oyuncu.Kapilar, Urun("donem", 500), Simdi, Simdi.AddDays(3));
+
+            Assert.That(teklif.Gecerli(acilis - 1, Simdi), Is.False);
+            Assert.That(teklif.Gecerli(acilis, Simdi.AddSeconds(-1)), Is.False);
+            Assert.That(teklif.Gecerli(acilis, Simdi.AddDays(3)), Is.False);
+            Assert.That(teklif.Gecerli(acilis, Simdi.AddDays(1)), Is.True);
+
+            int bakiye = oyuncu.Cuzdan.Bakiye;
+            Assert.That(teklif.SatinAlimTamamlandi(oyuncu, Simdi.AddDays(1)), Is.True);
+            Assert.That(oyuncu.Cuzdan.Bakiye, Is.EqualTo(bakiye + 500));
+            Assert.That(teklif.SatinAlimTamamlandi(oyuncu, Simdi.AddDays(1)), Is.False, "Teklif bir kez alınır.");
+        }
+
+        // ------------------------------------------------------------------ Diğer meta özellikler (9.15)
+
+        [Test]
+        [Property("GDD", "9.15.1")]
+        public void Bir_sure_oynamayan_oyuncuya_donuste_hediye_verilir()
+        {
+            int acilis = P.TamSayi(MetaParametreAdlari.AcilisKarsilamaHediyesi);
+            var oyuncu = new Oyuncu(P, Simdi) { EnYuksekBolum = acilis };
+            var sure = TimeSpan.FromDays(7);
+            var hediye = new GeriDonusHediyesi(oyuncu.Kapilar, sure, new OdulPaketi { Para = 300 }, Simdi);
+            int bakiye = oyuncu.Cuzdan.Bakiye;
+
+            Assert.That(hediye.OyunaGirildi(oyuncu, Simdi.AddDays(6)), Is.False, "Süre dolmadı.");
+            Assert.That(hediye.OyunaGirildi(oyuncu, Simdi.AddDays(12)), Is.False, "Süre son girişten ölçülür.");
+            Assert.That(hediye.OyunaGirildi(oyuncu, Simdi.AddDays(19)), Is.True);
+            Assert.That(oyuncu.Cuzdan.Bakiye, Is.EqualTo(bakiye + 300));
+            Assert.That(hediye.OyunaGirildi(oyuncu, Simdi.AddDays(19)), Is.False);
+
+            var yeni = new Oyuncu(P, Simdi) { EnYuksekBolum = acilis - 1 };
+            var kapali = new GeriDonusHediyesi(yeni.Kapilar, sure, new OdulPaketi { Para = 300 }, Simdi);
+            Assert.That(kapali.OyunaGirildi(yeni, Simdi.AddDays(30)), Is.False, "Kapı açılmadan hediye verilmez.");
+        }
+
+        [Test]
+        [Property("GDD", "9.15.2, 9.2.3")]
+        public void Hesap_baglama_odulu_bir_kez_verilir()
+        {
+            var oyuncu = new Oyuncu(P, Simdi);
+            int bakiye = oyuncu.Cuzdan.Bakiye;
+
+            Assert.That(oyuncu.HesapBagla(), Is.True);
+            Assert.That(oyuncu.HesapBagla(), Is.False);
+
+            Assert.That(oyuncu.HesapBagli, Is.True);
+            Assert.That(oyuncu.Cuzdan.Bakiye, Is.EqualTo(bakiye + P.TamSayi(MetaParametreAdlari.HesapBaglamaOdulu)));
+        }
+
+        [Test]
+        [Property("GDD", "9.15.3, 9.4")]
+        public void Liderlik_tablosu_arkadas_daveti_ve_gorevler_kendi_kapilarinda_acilir()
+        {
+            var oyuncu = new Oyuncu(P, Simdi) { EnYuksekBolum = 1 };
+            Assert.That(new[] { oyuncu.LiderlikTablosuAcik, oyuncu.ArkadasDavetiAcik, oyuncu.GorevlerAcik }, Is.All.False);
+
+            oyuncu.EnYuksekBolum = P.TamSayi(MetaParametreAdlari.AcilisLiderlikTablosu);
+            Assert.That(oyuncu.LiderlikTablosuAcik, Is.True);
+            oyuncu.EnYuksekBolum = P.TamSayi(MetaParametreAdlari.AcilisArkadasDaveti);
+            Assert.That(oyuncu.ArkadasDavetiAcik, Is.True);
+            oyuncu.EnYuksekBolum = P.TamSayi(MetaParametreAdlari.AcilisGorevler);
+            Assert.That(oyuncu.GorevlerAcik, Is.True);
+        }
     }
 }

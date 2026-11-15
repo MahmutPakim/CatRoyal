@@ -6,7 +6,7 @@ Dosya adı `bolum_NNN.json`. Zorluk etiketi bölüm dosyasında değil, `veri/zo
 | Alan | Zorunlu | Açıklama |
 |---|---|---|
 | `kimlik`, `surum` | kimlik | Bölüm numarası ve düzenleme sürümü. |
-| `genislik`, `yukseklik` | evet | Tahta boyutu. Üst sınırlar: `tahta_genislik_standart`, `tahta_yukseklik_standart`. |
+| `genislik`, `yukseklik` | evet | Tahta boyutu. Üst sınırlar: `tahta_genislik_standart`, `tahta_yukseklik_standart`; çok ekranlı bölümde yükseklik sınırı `kaydirmali_tahta_yukseklik`. |
 | `hamle` | evet | Hamle sayısı (GDD 8.3). |
 | `renkler` | evet | Renk sayısı. Renkler göreli kimlikle anılır: `r0`, `r1`, … |
 | `renkOranlari` | hayır | Renk başına dolgu ağırlığı (GDD 5.3.5). |
@@ -20,6 +20,7 @@ Dosya adı `bolum_NNN.json`. Zorluk etiketi bölüm dosyasında değil, `veri/zo
 | `hedefler` | hayır | `{ "tur", "adet", "ekran" }`. `adet` 0 = tahtadaki hepsi. Renk hedefi: `renk:N`. |
 | `engeller`, `katmanlar` | hayır | Ad → tanım (GDD 6.4). Hücre kodlarında bu adlar kullanılır. |
 | `bayraklar` | hayır | `caprazKayma`, `cokEkranli`, `delik`. |
+| `ekranlar` | çok ekranlıda | `[ilk satır, son satır]` listesi, yukarıdan aşağıya (GDD 8.9). Yalnız `cokEkranli` bayrağıyla verilir. |
 | `ekSinirlar` | hayır | `{ "tur", "adet" }` listesi. |
 
 ## Hücre kodları
@@ -52,3 +53,11 @@ Ezilebilen alanlar: `hedefTuru`, `azamiKatman`, `bagisikliklar` (`cizgi`, `bomba
 
 Her taş için öğeler ağırlıklarıyla çekilir. `pas`, setin bir şey vermeyip sırayı bir sonraki adıma bırakma
 ağırlığıdır. `azami`, o öğeden en fazla kaç tane çıkacağıdır. `?` kodu rastgele renktir ve ayarlı dolgudan geçer (GDD 5.3.6).
+
+## Çok ekranlı bölümler
+
+`bayraklar.cokEkranli` açıkken `ekranlar` zorunludur: en az iki ekran, tahtayı yukarıdan aşağıya boşluksuz ve
+çakışmadan kaplar; her ekran en fazla `tahta_yukseklik_standart` satırdır ve en az bir hedef taşır (hedefin
+`ekran` alanı). `hucreler`, katman haritaları, `girisler` ve `toplamaHucreleri` bütün tahtanın satırlarıyla
+yazılır. Oyunda her ekran kendi tahtasıdır: olaylardaki konumlar o ekrana göredir, satır 1 ekranın en üst satırıdır.
+`girisler` verilmezse her ekranda sütunun en üstteki oynanabilir hücresi giriştir.

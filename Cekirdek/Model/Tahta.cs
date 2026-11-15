@@ -105,6 +105,12 @@ namespace CatRoyal.Cekirdek.Model
             }
         }
 
+        /// <summary>
+        /// Çok ekranlı bölümde (GDD 8.9.2) taşlar bir ekrandan diğerine taşınır; taş kimlikleri çakışmasın diye
+        /// yeni ekranın tahtası sayacı öncekinden devralır.
+        /// </summary>
+        internal void KimlikSayaciniDevral(Tahta onceki) => _sonrakiKimlik = Math.Max(_sonrakiKimlik, onceki._sonrakiKimlik);
+
         public Tas? TasAl(Konum konum) => Icinde(konum) ? this[konum].Tas : null;
 
         public Tas NormalTasUret(int renk)

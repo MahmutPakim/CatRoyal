@@ -60,6 +60,54 @@ namespace CatRoyal.Cekirdek.Meta
             }
         }
 
+        internal Dictionary<string, object?> DurumuYaz()
+        {
+            var adet = new Dictionary<string, object?>();
+            foreach (var cift in _adet) adet[cift.Key.ToString()] = cift.Value;
+            var bitis = new Dictionary<string, object?>();
+            foreach (var cift in _sinirsizBitis) bitis[cift.Key.ToString()] = KayitAlani.Zaman(cift.Value);
+            var duraklatilan = new Dictionary<string, object?>();
+            foreach (var cift in _duraklatilan) duraklatilan[cift.Key.ToString()] = cift.Value.Ticks;
+            return new Dictionary<string, object?>
+            {
+                ["adet"] = adet,
+                ["sinirsiz_bitis"] = bitis,
+                ["duraklatilan"] = duraklatilan,
+            };
+        }
+
+        /// <summary>Artık var olmayan bir takviye türü kayıtta kalmışsa atlanır.</summary>
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            _adet.Clear();
+            _sinirsizBitis.Clear();
+            _duraklatilan.Clear();
+            int azami = _p.TamSayi(MetaParametreAdlari.TakviyeAzamiAdet);
+            foreach (var cift in KayitAlani.Nesne(d, "adet"))
+            {
+                if (Enum.TryParse(cift.Key, out TakviyeTuru tur) && Enum.IsDefined(typeof(TakviyeTuru), tur))
+                {
+                    _adet[tur] = Math.Max(0, Math.Min(azami, KayitAlani.TamSayi(cift.Value, cift.Key)));
+                }
+            }
+
+            foreach (var cift in KayitAlani.Nesne(d, "sinirsiz_bitis"))
+            {
+                if (Enum.TryParse(cift.Key, out TakviyeTuru tur) && Enum.IsDefined(typeof(TakviyeTuru), tur))
+                {
+                    _sinirsizBitis[tur] = KayitAlani.Zaman(cift.Value, cift.Key);
+                }
+            }
+
+            foreach (var cift in KayitAlani.Nesne(d, "duraklatilan"))
+            {
+                if (Enum.TryParse(cift.Key, out TakviyeTuru tur) && Enum.IsDefined(typeof(TakviyeTuru), tur))
+                {
+                    _duraklatilan[tur] = TimeSpan.FromTicks(KayitAlani.UzunSayi(cift.Value, cift.Key));
+                }
+            }
+        }
+
         public bool Kullanilabilir(TakviyeTuru tur, DateTime simdi) => SinirsizAktif(tur, simdi) || Adet(tur) > 0;
 
         /// <summary>
@@ -167,6 +215,19 @@ namespace CatRoyal.Cekirdek.Meta
 
         /// <summary>Bir deney grubu bazı kapıları öne çekebilir (GDD 9.4.1).</summary>
         public void OneCek(string acilisParametresi, int bolum) => _oneCekilen[acilisParametresi] = bolum;
+
+        internal Dictionary<string, object?> DurumuYaz()
+        {
+            var d = new Dictionary<string, object?>();
+            foreach (var cift in _oneCekilen) d[cift.Key] = cift.Value;
+            return d;
+        }
+
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            _oneCekilen.Clear();
+            foreach (var cift in d) _oneCekilen[cift.Key] = KayitAlani.TamSayi(cift.Value, cift.Key);
+        }
 
         public bool TakviyeAcik(TakviyeTuru tur, int enYuksekBolum)
         {

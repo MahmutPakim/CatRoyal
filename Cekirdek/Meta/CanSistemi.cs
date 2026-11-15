@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using CatRoyal.Cekirdek.Yapilandirma;
 
 namespace CatRoyal.Cekirdek.Meta
@@ -144,6 +145,22 @@ namespace CatRoyal.Cekirdek.Meta
                 _sinirsizBitis = simdi + _duraklatilanSinirsiz.Value;
                 _duraklatilanSinirsiz = null;
             }
+        }
+
+        internal Dictionary<string, object?> DurumuYaz() => new Dictionary<string, object?>
+        {
+            ["premium"] = Premium,
+            ["tam_dolacagi_an"] = KayitAlani.Zaman(TamDolacagiAn),
+            ["sinirsiz_bitis"] = KayitAlani.Zaman(_sinirsizBitis),
+            ["duraklatilan_sinirsiz"] = _duraklatilanSinirsiz.HasValue ? (object)_duraklatilanSinirsiz.Value.Ticks : null,
+        };
+
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            Premium = KayitAlani.Mantik(d, "premium", Premium);
+            TamDolacagiAn = KayitAlani.Zaman(d, "tam_dolacagi_an", TamDolacagiAn);
+            _sinirsizBitis = KayitAlani.Zaman(d, "sinirsiz_bitis", _sinirsizBitis);
+            _duraklatilanSinirsiz = KayitAlani.Sure(d, "duraklatilan_sinirsiz");
         }
 
         /// <summary>

@@ -10,6 +10,7 @@ namespace CatRoyal.Cekirdek.Yapilandirma
         // Tahta ve renk (GDD 2.1, 2.2, 8.1, 8.2)
         public const string TahtaGenislikStandart = "tahta_genislik_standart";
         public const string TahtaYukseklikStandart = "tahta_yukseklik_standart";
+        public const string KaydirmaliTahtaYukseklik = "kaydirmali_tahta_yukseklik";
         public const string DarTahtaAzamiSutunEksigi = "dar_tahta_azami_sutun_eksigi";
         public const string DarTahtaAzamiSatirEksigi = "dar_tahta_azami_satir_eksigi";
         public const string RenkSayisiStandart = "renk_sayisi_standart";

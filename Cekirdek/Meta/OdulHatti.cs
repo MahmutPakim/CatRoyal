@@ -179,6 +179,32 @@ namespace CatRoyal.Cekirdek.Meta
 
         public void PremiumSatinAl() => Premium = true;
 
+        internal Dictionary<string, object?> DurumuYaz() => new Dictionary<string, object?>
+        {
+            ["basamak"] = Basamak,
+            ["basamak_puani"] = BasamakPuani,
+            ["premium"] = Premium,
+            ["hazne_puani"] = HaznePuani,
+            ["alinan_ucretsiz"] = _alinanUcretsiz.OrderBy(b => b).Cast<object?>().ToList(),
+            ["alinan_premium"] = _alinanPremium.OrderBy(b => b).Cast<object?>().ToList(),
+        };
+
+        /// <summary>Basamak tablosu kayıttan sonra kısaldıysa değerler tabloya sığdırılır.</summary>
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            Basamak = Math.Max(0, Math.Min(_hedefler.Count, KayitAlani.TamSayi(d, "basamak", 0)));
+            int puan = Math.Max(0, KayitAlani.TamSayi(d, "basamak_puani", 0));
+            BasamakPuani = SonBasamakGecildi ? 0 : Math.Min(puan, _hedefler[Basamak] - 1);
+            Premium = KayitAlani.Mantik(d, "premium", false);
+            HaznePuani = Math.Max(0, Math.Min(_hazneHedefi, KayitAlani.TamSayi(d, "hazne_puani", 0)));
+            _alinanUcretsiz.Clear();
+            _alinanPremium.Clear();
+            foreach (object? b in KayitAlani.Dizi(d, "alinan_ucretsiz")) _alinanUcretsiz.Add(KayitAlani.TamSayi(b, "alinan_ucretsiz"));
+            foreach (object? b in KayitAlani.Dizi(d, "alinan_premium")) _alinanPremium.Add(KayitAlani.TamSayi(b, "alinan_premium"));
+            _alinanUcretsiz.RemoveWhere(b => b < 0 || b >= Basamak);
+            _alinanPremium.RemoveWhere(b => b < 0 || b >= Basamak);
+        }
+
         /// <summary>
         /// Birikim haznesi (GDD 9.8.8): hazne premium hatta para biriktirir. Para yalnızca oyuncu son basamaktayken
         /// hesaplanır: her parametre: hazne_asama_puani puan bir aşamadır ve her aşama parametre: hazne_asama_parasi
@@ -239,10 +265,55 @@ namespace CatRoyal.Cekirdek.Meta
                 _p.TamSayi(MetaParametreAdlari.EtkinlikCarpaniSuresiDk),
                 simdi);
 
+        internal Dictionary<string, object?> DurumuYaz() => new Dictionary<string, object?>
+        {
+            ["bitis"] = KayitAlani.Zaman(_bitis),
+            ["kat"] = _kat,
+            ["secilen_duzey"] = SecilenDuzey.HasValue ? (object)SecilenDuzey.Value : null,
+        };
+
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            _bitis = KayitAlani.Zaman(d, "bitis", DateTime.MinValue);
+            _kat = Math.Max(1, KayitAlani.TamSayi(d, "kat", 1));
+            SecilenDuzey = d.TryGetValue("secilen_duzey", out object? duzey) && duzey != null
+                ? Math.Max(1, KayitAlani.TamSayi(duzey, "secilen_duzey"))
+                : (int?)null;
+        }
+
+        /// <summary>
+        /// Oyuncunun bölüm öncesinde seçtiği çarpan düzeyi (GDD 9.10.5); null ise aktif çarpanın tamamı kullanılır.
+        /// Seçim kalıcıdır: oyuncu değiştirene kadar sonraki bölümlerde de geçerlidir.
+        /// </summary>
+        public int? SecilenDuzey { get; private set; }
+
+        /// <summary>
+        /// Bölüm öncesinde seçilebilen düzeyler: 1'den aktif çarpana kadar. Aktif çarpan yoksa yalnızca 1.
+        /// Yorum (9.10.5 "ayrıntılar kendi tasarımın"): oyuncu aktif çarpanı aşamaz, yalnızca daha düşüğünü seçebilir.
+        /// </summary>
+        public IReadOnlyList<int> SecilebilirDuzeyler(DateTime simdi) => Enumerable.Range(1, AktifCarpan(simdi)).ToList();
+
+        /// <summary>Düzeyi seçer; null seçimi kaldırır. 1'den küçük düzey seçilemez.</summary>
+        public bool DuzeySec(int? duzey)
+        {
+            if (duzey.HasValue && duzey.Value < 1)
+            {
+                return false;
+            }
+
+            SecilenDuzey = duzey;
+            return true;
+        }
+
         /// <summary>
         /// Bölüme girildiği anda konan "çarpanla oynandı" işareti: bölüm kazanılınca kullanılacak çarpan.
-        /// Bölüme girerken çarpan aktif değilse 1'dir (GDD 9.10.1, 9.10.2).
+        /// Bölüme girerken çarpan aktif değilse 1'dir (GDD 9.10.1, 9.10.2). Çarpan seçimi açıksa ve oyuncu bir
+        /// düzey seçtiyse işaret, seçilen düzeyle aktif çarpanın küçüğüdür (9.10.5).
         /// </summary>
-        public int BolumeGir(DateTime simdi) => AktifCarpan(simdi);
+        public int BolumeGir(DateTime simdi, bool secimAcik = false)
+        {
+            int aktif = AktifCarpan(simdi);
+            return secimAcik && SecilenDuzey.HasValue ? Math.Min(aktif, SecilenDuzey.Value) : aktif;
+        }
     }
 }
