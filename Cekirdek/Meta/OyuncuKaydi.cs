@@ -32,6 +32,7 @@ namespace CatRoyal.Cekirdek.Meta
             var kok = new Dictionary<string, object?>
             {
                 ["surum"] = Surum,
+                ["kimlik"] = oyuncu.Kimlik,
                 ["en_yuksek_bolum"] = oyuncu.EnYuksekBolum,
                 ["kazanma_serisi"] = oyuncu.KazanmaSerisi,
                 ["yildiz"] = oyuncu.Yildiz,
@@ -47,9 +48,28 @@ namespace CatRoyal.Cekirdek.Meta
                 ["carpan"] = oyuncu.Carpan.DurumuYaz(),
                 ["zorluk"] = oyuncu.Zorluk.DurumuYaz(),
                 ["alan"] = oyuncu.Alan.DurumuYaz(),
-                ["album"] = oyuncu.Album.DurumuYaz(),
+                ["album_sezonu"] = oyuncu.AlbumSezonu.DurumuYaz(),
+                ["sezon_donemi"] = oyuncu.SezonDonemi.DurumuYaz(),
+                ["hafta_donemi"] = oyuncu.HaftaDonemi.DurumuYaz(),
+                ["pencereler"] = oyuncu.Pencereler.DurumuYaz(),
+                ["kozmetikler"] = new List<object?>(oyuncu.Kozmetikler),
+                ["olay_esyalari"] = OlayEsyalariniYaz(oyuncu),
+                ["olaylar"] = oyuncu.Olaylar.DurumuYaz(),
+                ["takim"] = oyuncu.Takim.DurumuYaz(),
+                ["gelen_kutusu"] = oyuncu.GelenKutusu.DurumuYaz(),
             };
             return Json.Yaz(kok);
+        }
+
+        private static Dictionary<string, object?> OlayEsyalariniYaz(Oyuncu oyuncu)
+        {
+            var d = new Dictionary<string, object?>();
+            foreach (var cift in oyuncu.OlayEsyalari)
+            {
+                d[cift.Key] = cift.Value;
+            }
+
+            return d;
         }
 
         /// <summary>Kayıt metninden oyuncuyu kurar.</summary>
@@ -79,6 +99,11 @@ namespace CatRoyal.Cekirdek.Meta
             }
 
             var oyuncu = new Oyuncu(parametreler, simdi);
+            if (kok.TryGetValue("kimlik", out object? oyuncuKimligi) && oyuncuKimligi is string kimlikMetni && kimlikMetni.Length > 0)
+            {
+                oyuncu.Kimlik = kimlikMetni;
+            }
+
             oyuncu.EnYuksekBolum = Math.Max(1, KayitAlani.TamSayi(kok, "en_yuksek_bolum", 1));
             oyuncu.Yildiz = Math.Max(0, KayitAlani.TamSayi(kok, "yildiz", 0));
             oyuncu.TemelDurumuYukle(
@@ -96,7 +121,42 @@ namespace CatRoyal.Cekirdek.Meta
             Bolum(kok, "carpan", oyuncu.Carpan.DurumuYukle);
             Bolum(kok, "zorluk", oyuncu.Zorluk.DurumuYukle);
             Bolum(kok, "alan", oyuncu.Alan.DurumuYukle);
-            Bolum(kok, "album", oyuncu.Album.DurumuYukle);
+            if (kok.ContainsKey("album_sezonu"))
+            {
+                Bolum(kok, "album_sezonu", oyuncu.AlbumSezonu.DurumuYukle);
+            }
+            else
+            {
+                // Albüm sezonu eklenmeden önceki kayıtlar yalnızca kartları taşır.
+                Bolum(kok, "album", oyuncu.Album.DurumuYukle);
+            }
+
+            Bolum(kok, "sezon_donemi", oyuncu.SezonDonemi.DurumuYukle);
+            Bolum(kok, "hafta_donemi", oyuncu.HaftaDonemi.DurumuYukle);
+            foreach (object? kozmetik in KayitAlani.Dizi(kok, "kozmetikler"))
+            {
+                if (kozmetik is string ad) oyuncu.Kozmetikler.Add(ad);
+            }
+
+            foreach (var cift in KayitAlani.Nesne(kok, "olay_esyalari"))
+            {
+                oyuncu.OlayEsyalari[cift.Key] = Math.Max(0, KayitAlani.TamSayi(cift.Value, cift.Key));
+            }
+
+            Bolum(kok, "olaylar", oyuncu.Olaylar.DurumuYukle);
+            Bolum(kok, "takim", oyuncu.Takim.DurumuYukle);
+            oyuncu.GelenKutusu.DurumuYukle(KayitAlani.Dizi(kok, "gelen_kutusu"));
+
+            if (kok.ContainsKey("pencereler"))
+            {
+                Bolum(kok, "pencereler", oyuncu.Pencereler.DurumuYukle);
+            }
+            else
+            {
+                // Pencere kaydı olmayan eski kayıt: ilerlemiş oyuncuya eski tanıtımlar yeniden gösterilmez.
+                OzellikTanitimlari.AcikOlanlariGosterildiSay(oyuncu);
+            }
+
             return oyuncu;
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CatRoyal.Cekirdek.Meta;
+using CatRoyal.Cekirdek.Tasarim;
 
 namespace CatRoyal.Cekirdek.Sunucu
 {
@@ -32,6 +33,7 @@ namespace CatRoyal.Cekirdek.Sunucu
         private readonly List<OlayTakvimKaydi> _takvim = new List<OlayTakvimKaydi>();
         private readonly Dictionary<int, ZorlukEtiketi> _etiketler = new Dictionary<int, ZorlukEtiketi>();
         private readonly Dictionary<string, Grup> _gruplar = new Dictionary<string, Grup>();
+        private readonly Dictionary<int, BolumPaketiVerisi> _paketler = new Dictionary<int, BolumPaketiVerisi>();
 
         public YerelSahteSunucu(ISaat saat)
         {
@@ -61,6 +63,19 @@ namespace CatRoyal.Cekirdek.Sunucu
 
         public void EtiketDegistir(int bolum, ZorlukEtiketi etiket) => _etiketler[bolum] = etiket;
 
+        /// <summary>Sunucuya bölüm paketi koyar; aynı numaralı paketin yerine geçer.</summary>
+        public void PaketYayimla(BolumPaketiVerisi paket) => _paketler[paket.Paket] = paket;
+
+        public SunucuYaniti<IReadOnlyDictionary<int, int>> PaketSurumleri() =>
+            Cevrimdisi
+                ? SunucuYaniti<IReadOnlyDictionary<int, int>>.Basarisiz()
+                : SunucuYaniti<IReadOnlyDictionary<int, int>>.Tamam(_paketler.ToDictionary(c => c.Key, c => c.Value.Surum));
+
+        public SunucuYaniti<BolumPaketiVerisi> PaketIndir(int paket) =>
+            !Cevrimdisi && _paketler.TryGetValue(paket, out var veri)
+                ? SunucuYaniti<BolumPaketiVerisi>.Tamam(veri)
+                : SunucuYaniti<BolumPaketiVerisi>.Basarisiz();
+
         public SunucuYaniti<SunucuYapilandirmasi> Yapilandirma() =>
             Cevrimdisi ? SunucuYaniti<SunucuYapilandirmasi>.Basarisiz() : SunucuYaniti<SunucuYapilandirmasi>.Tamam(Ayarlar);
 
@@ -76,7 +91,10 @@ namespace CatRoyal.Cekirdek.Sunucu
 
         public SunucuYaniti<OlayGrubu> GrubaKatil(string olayKimligi, string oyuncuKimligi, int grupBoyutu)
         {
-            var olay = _takvim.FirstOrDefault(o => o.Kimlik == olayKimligi);
+            // "#n" eki aynı olayın n. katılımını belirtir; takvimde olayın kendi kimliği aranır.
+            int ek = olayKimligi.IndexOf('#');
+            string takvimKimligi = ek < 0 ? olayKimligi : olayKimligi.Substring(0, ek);
+            var olay = _takvim.FirstOrDefault(o => o.Kimlik == takvimKimligi);
             if (Cevrimdisi || olay == null || grupBoyutu < 1)
             {
                 return SunucuYaniti<OlayGrubu>.Basarisiz();
@@ -91,7 +109,7 @@ namespace CatRoyal.Cekirdek.Sunucu
                     return SunucuYaniti<OlayGrubu>.Basarisiz();
                 }
 
-                grup = new Grup(olay, oyuncuKimligi, grupBoyutu, SimdiUtc, Math.Max(1, BotAzamiSaatlikPuan));
+                grup = new Grup(olay, olayKimligi, oyuncuKimligi, grupBoyutu, SimdiUtc, Math.Max(1, BotAzamiSaatlikPuan));
                 _gruplar.Add(anahtar, grup);
             }
 
@@ -140,12 +158,12 @@ namespace CatRoyal.Cekirdek.Sunucu
             private readonly DateTime _katilim;
             private readonly List<(string Kimlik, int SaatlikPuan)> _botlar = new List<(string, int)>();
 
-            public Grup(OlayTakvimKaydi olay, string oyuncu, int boyut, DateTime katilim, int botAzamiSaatlikPuan)
+            public Grup(OlayTakvimKaydi olay, string grupAdi, string oyuncu, int boyut, DateTime katilim, int botAzamiSaatlikPuan)
             {
                 Olay = olay;
                 _oyuncu = oyuncu;
                 _katilim = katilim;
-                Kimlik = olay.Kimlik + ":" + Ozet(olay.Kimlik + "\n" + oyuncu).ToString("x8");
+                Kimlik = grupAdi + ":" + Ozet(grupAdi + "\n" + oyuncu).ToString("x8");
                 for (int i = 1; i < boyut; i++)
                 {
                     string bot = "bot_" + i;

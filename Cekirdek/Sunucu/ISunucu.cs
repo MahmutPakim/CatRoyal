@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using CatRoyal.Cekirdek.Meta;
+using CatRoyal.Cekirdek.Tasarim;
 using CatRoyal.Cekirdek.Yapilandirma;
 
 namespace CatRoyal.Cekirdek.Sunucu
@@ -38,6 +39,9 @@ namespace CatRoyal.Cekirdek.Sunucu
         TakimYarisi,
         HaritaKesif,
         OrtakliAtis,
+
+        /// <summary>Hafta sonu çarpanı gibi kısa süreli etkinlik: puan formülüne yalnızca çarpan ekler (GDD 10.9.6).</summary>
+        CarpanEtkinligi,
     }
 
     /// <summary>Sunucu takvimindeki bir olay (GDD 10.0.1, 10.0.2, 9.4.8).</summary>
@@ -69,6 +73,30 @@ namespace CatRoyal.Cekirdek.Sunucu
         /// <summary>Bu olayı engelleyen olayların kimlikleri (GDD 9.4.8, 10.0.4).</summary>
         public List<string> EngelleyenOlaylar { get; } = new List<string>();
 
+        /// <summary>Açıkken bu olayın alınmamış ödüllerini zorla aldıran olayların kimlikleri (GDD 9.4.8, 10.0.4).</summary>
+        public List<string> OdulunuZorlaAldiranOlaylar { get; } = new List<string>();
+
+        /// <summary>Basamak tablosu (GDD 10.9.1); verilmezse olay türünün varsayılan tablosu kullanılır.</summary>
+        public IReadOnlyList<int>? BasamakHedefleri { get; set; }
+
+        /// <summary>Basamak ödülleri, basamak sırasıyla (GDD 10.0.7, 10.9.1); ödülü olmayan basamak null.</summary>
+        public List<OdulPaketi?> Oduller { get; } = new List<OdulPaketi?>();
+
+        /// <summary>
+        /// Basamaklı toplama olayının tür sırası, 0 tabanlı (GDD 10.9.1): n. tür, ilk toplama olayının açılışından
+        /// n × parametre: olay_turu_acilis_araligi bölüm sonra açılır.
+        /// </summary>
+        public int TurSirasi { get; set; }
+
+        /// <summary>Süre bitince kalan toplanabilirler aynı türün bir sonraki olayına aktarılır mı (GDD 10.0.6)?</summary>
+        public bool ToplanabilirAktarilir { get; set; }
+
+        /// <summary>Çarpan etkinliğinin katı (GDD 10.9.6); verilmezse parametre: carpan_bileti_kati.</summary>
+        public int? CarpanKati { get; set; }
+
+        /// <summary>Harita keşif olayının haritası, ödülleri ve teklifleri (GDD 10.4); yalnız o olayda verilir.</summary>
+        public OlayIskeletleri.HaritaKesifYapilandirmasi? HaritaKesif { get; set; }
+
         public bool Suruyor(DateTime simdi) => !Kapali && simdi >= Baslangic && simdi < Bitis;
     }
 
@@ -94,6 +122,20 @@ namespace CatRoyal.Cekirdek.Sunucu
 
         /// <summary>Deney grubunun öne çektiği kapılar: açılış parametresi → bölüm (GDD 9.4.1).</summary>
         public Dictionary<string, int> OneCekilenKapilar { get; } = new Dictionary<string, int>();
+
+        /// <summary>Süren sezon (GDD 9.8.11); sunucu bildirmediyse null.</summary>
+        public DonemBilgisi? Sezon { get; set; }
+
+        /// <summary>Süren hafta (GDD 9.9.7); sunucu bildirmediyse null.</summary>
+        public DonemBilgisi? Hafta { get; set; }
+
+        /// <summary>Süren albüm sezonu (GDD 9.7.1); sunucu bildirmediyse null.</summary>
+        public DonemBilgisi? AlbumSezonu { get; set; }
+
+        /// <summary>
+        /// Deney grubunda ilk kurtarma bölümlerinin çekildiği ilerleme bölümleri (GDD 10.2.6); boşsa olağan ritim.
+        /// </summary>
+        public List<int> OneCekilenKurtarmaBolumleri { get; } = new List<int>();
 
         /// <summary>Sunucunun değiştirdiği parametre değerleri: ad → değer.</summary>
         public Dictionary<string, string> ParametreDegerleri { get; } = new Dictionary<string, string>();
@@ -177,7 +219,16 @@ namespace CatRoyal.Cekirdek.Sunucu
         /// <summary>Olay takvimi (GDD 10.0.1, 10.0.2): geçmiş, süren ve yaklaşan olaylar.</summary>
         SunucuYaniti<IReadOnlyList<OlayTakvimKaydi>> OlayTakvimi();
 
-        /// <summary>Oyuncuyu olayın bir grubuna koyar (GDD 10.1.2). Aynı oyuncu yeniden isterse aynı grubu alır.</summary>
+        /// <summary>Sunucudaki bölüm paketleri: paket numarası → sürüm (GDD 8.11.1).</summary>
+        SunucuYaniti<IReadOnlyDictionary<int, int>> PaketSurumleri();
+
+        /// <summary>Bölüm paketini indirir (GDD 8.11.2).</summary>
+        SunucuYaniti<BolumPaketiVerisi> PaketIndir(int paket);
+
+        /// <summary>
+        /// Oyuncuyu olayın bir grubuna koyar (GDD 10.1.2). Aynı oyuncu yeniden isterse aynı grubu alır. Olay kimliğine
+        /// "#n" eklenirse aynı olayın n. katılımı için ayrı bir grup istenir (aşamalı olaylar, 10.1.5).
+        /// </summary>
         SunucuYaniti<OlayGrubu> GrubaKatil(string olayKimligi, string oyuncuKimligi, int grupBoyutu);
 
         /// <summary>Oyuncunun kazandığı puanı ekler ve güncel listeyi döndürür (GDD 10.1.4).</summary>
@@ -192,10 +243,15 @@ namespace CatRoyal.Cekirdek.Sunucu
     {
         /// <summary>
         /// Yapılandırmayı ve etiket değişikliklerini uygular: günlük ödülün kapatılması ve hile koruması
-        /// (GDD 9.5.8, 9.5.9), fiyat düzeyi (9.3.7), öne çekilen kapılar (9.4.1), zorluk etiketleri (8.8.1a).
+        /// (GDD 9.5.8, 9.5.9), fiyat düzeyi (9.3.7), öne çekilen kapılar (9.4.1), zorluk etiketleri (8.8.1a), sezon,
+        /// hafta ve albüm sezonu dönemleri (9.7.1, 9.8.11, 9.9.7).
         /// </summary>
         /// <returns>Sunucuya ulaşılamadıysa false; o durumda hiçbir şey değişmez.</returns>
-        public static bool Uygula(ISunucu sunucu, Oyuncu oyuncu, ZorlukEtiketTablosu etiketler)
+        /// <param name="sunucu">Sunucu.</param>
+        /// <param name="oyuncu">Eşitlenen oyuncu.</param>
+        /// <param name="etiketler">Sunucu değişikliklerinin uygulanacağı zorluk etiketi tablosu.</param>
+        /// <param name="sosyal">Sosyal sunucu; verilirse takım durumu ve gelen kutusu da eşitlenir (GDD 10.7, 9.1.8).</param>
+        public static bool Uygula(ISunucu sunucu, Oyuncu oyuncu, ZorlukEtiketTablosu etiketler, ISosyalSunucu? sosyal = null)
         {
             var yapilandirma = sunucu.Yapilandirma();
             var degisiklikler = sunucu.EtiketDegisiklikleri();
@@ -217,6 +273,23 @@ namespace CatRoyal.Cekirdek.Sunucu
             {
                 etiketler.Degistir(cift.Key, cift.Value);
             }
+
+            // Dönemler sunucu saatiyle eşitlenir; biten dönemlerin ödülleri verilir ve pencereleri kuyruğa girer.
+            var simdi = sunucu.SimdiUtc;
+            oyuncu.SezonuEsitle(y.Sezon, simdi);
+            oyuncu.HaftayiEsitle(y.Hafta, simdi);
+            oyuncu.AlbumSezonunuEsitle(y.AlbumSezonu, simdi);
+
+            // Olay takvimi (GDD 10.0.1): alınamadıysa kurulu olaylar sürer, yalnızca süresi dolanlar biter.
+            var takvim = sunucu.OlayTakvimi();
+            oyuncu.Olaylar.TakvimiUygula(takvim.Basarili ? takvim.Deger : null, simdi);
+            if (sosyal != null)
+            {
+                oyuncu.Takim.Esitle(sosyal);
+                oyuncu.GelenKutusu.Esitle(sosyal);
+            }
+
+            oyuncu.Olaylar.Ilerle(sunucu, simdi, sosyal);
 
             return true;
         }

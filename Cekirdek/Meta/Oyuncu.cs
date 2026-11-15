@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CatRoyal.Cekirdek.Bolum;
 using CatRoyal.Cekirdek.Model;
+using CatRoyal.Cekirdek.OlayIskeletleri;
 using CatRoyal.Cekirdek.Olaylar;
 using CatRoyal.Cekirdek.Veri;
 using CatRoyal.Cekirdek.Yapilandirma;
@@ -26,10 +27,17 @@ namespace CatRoyal.Cekirdek.Meta
             Carpan = new CarpanSistemi(parametreler);
             Zorluk = new YariDinamikZorluk(parametreler);
             Alan = new AlanInsasi(parametreler);
-            Album = new Album(parametreler);
+            AlbumSezonu = new AlbumSezonu(parametreler, Kapilar);
+            Olaylar = new OlayYoneticisi(this);
+            Takim = new TakimUyeligi(this);
+            GelenKutusu = new GelenKutusu(this);
         }
 
         public ParametreTablosu Parametreler { get; }
+
+        /// <summary>Oyuncunun sunucudaki kimliği; grup ve sıralama isteklerinde kullanılır (GDD 10.1.2).</summary>
+        public string Kimlik { get; set; } = "yerel";
+
         public Cuzdan Cuzdan { get; }
         public CanSistemi Can { get; }
         public Envanter Envanter { get; }
@@ -41,7 +49,37 @@ namespace CatRoyal.Cekirdek.Meta
         public CarpanSistemi Carpan { get; }
         public YariDinamikZorluk Zorluk { get; }
         public AlanInsasi Alan { get; }
-        public Album Album { get; }
+        /// <summary>Sezonluk albüm (GDD 9.7).</summary>
+        public AlbumSezonu AlbumSezonu { get; }
+
+        /// <summary>Albümün içinde bulunulan aşamadaki kartları.</summary>
+        public Album Album => AlbumSezonu.Album;
+
+        /// <summary>Özellik ve olay pencerelerinin kuyruğu (GDD 9.4.5, 10.0.3).</summary>
+        public PencereKuyrugu Pencereler { get; } = new PencereKuyrugu();
+
+        /// <summary>Oyuncunun kazandığı kozmetikler: çerçeve, isim stili (GDD 9.8.3).</summary>
+        public ISet<string> Kozmetikler { get; } = new SortedSet<string>(StringComparer.Ordinal);
+
+        /// <summary>İçinde bulunulan sezon (GDD 9.8.11) ve hafta (9.9.7); süreleri sunucudan gelir.</summary>
+        public HatDonemi SezonDonemi { get; } = new HatDonemi();
+
+        public HatDonemi HaftaDonemi { get; } = new HatDonemi();
+
+        /// <summary>Takım üyeliği (GDD 10.7).</summary>
+        public TakimUyeligi Takim { get; }
+
+        /// <summary>Hediye canların ve gönderilen kartların düştüğü gelen kutusu (GDD 9.1.8).</summary>
+        public GelenKutusu GelenKutusu { get; }
+
+        /// <summary>Olay yöneticisi (GDD 10.0): sunucu takviminden kurulan olaylar.</summary>
+        public OlayYoneticisi Olaylar { get; }
+
+        /// <summary>
+        /// Ödüllerden gelen olay eşyaları: eşya kimliği → adet (bilye, enerji; GDD 10.9.5). Onları harcayan olaylar
+        /// buradan düşer.
+        /// </summary>
+        public Dictionary<string, int> OlayEsyalari { get; } = new Dictionary<string, int>(StringComparer.Ordinal);
 
         /// <summary>Oyuncunun ulaştığı en yüksek bölüm; kapılar buna göre değerlendirilir (GDD 9.4.2).</summary>
         public int EnYuksekBolum { get; set; } = 1;
@@ -82,6 +120,150 @@ namespace CatRoyal.Cekirdek.Meta
         {
             SezonHatti.PremiumSatinAl();
             Can.PremiumAyarla(true, simdi);
+
+            // GDD 9.8.7: satın almadan sonra bir ödül gösterim penceresi açılır.
+            Pencereler.Ekle(new Pencere("sezon_premium_odulleri", PencereTuru.OdulAlma, MetaParametreAdlari.AcilisSezonHatti, birKez: false));
+        }
+
+        /// <summary>
+        /// Hattın bir basamağının ödülünü alır ve içeriğini oyuncuya verir (GDD 9.8.6, 9.9.5).
+        /// </summary>
+        /// <returns>Ödül alınabilir durumda değilse false.</returns>
+        public bool HatOdulunuAl(OdulHatti hat, int basamak, bool premium, DateTime simdi)
+        {
+            if (!(premium ? hat.PremiumOduluAl(basamak) : hat.UcretsizOduluAl(basamak)))
+            {
+                return false;
+            }
+
+            var odul = premium ? hat.PremiumOdul(basamak) : hat.UcretsizOdul(basamak);
+            if (odul != null)
+            {
+                OdulVer(odul, simdi);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Sezonu sunucuyla eşitler (GDD 9.8.10, 9.8.11). Sezon bittiyse ya da sunucu başka bir sezon bildiriyorsa
+        /// alınmamış ödüller toplu verilir, bitiş penceresi kuyruğa girer ve yeni sezon ücretsiz hatla başlar. Oyuncu
+        /// sezon değişirken oyunda değilse önceki sezondan kalan ödüller ilk eşitlemede verilir.
+        /// </summary>
+        /// <param name="bilgi">Sunucunun bildirdiği sezon; sunucuya ulaşılamadıysa null.</param>
+        /// <param name="simdi">Sunucu saati.</param>
+        /// <returns>Bu çağrıda biten sezonun sonucu; sezon bitmediyse null.</returns>
+        public DonemBitisi? SezonuEsitle(DonemBilgisi? bilgi, DateTime simdi) =>
+            DonemiEsitle(
+                SezonDonemi, bilgi, simdi, "sezon", MetaParametreAdlari.AcilisSezonHatti,
+                () => SezonHatti, hedefler =>
+                {
+                    SezonHatti = OdulHatti.Sezon(Parametreler, hedefler);
+                    Can.PremiumAyarla(false, simdi);
+                });
+
+        /// <summary>
+        /// Haftayı sunucuyla eşitler (GDD 9.9.6, 9.9.7): hafta sonunda alınmamış ödüller toplu verilir ve yeni hafta
+        /// başlar. Son gün için ayrıca bir bildirim penceresi kuyruğa girer.
+        /// </summary>
+        public DonemBitisi? HaftayiEsitle(DonemBilgisi? bilgi, DateTime simdi)
+        {
+            var bitis = DonemiEsitle(
+                HaftaDonemi, bilgi, simdi, "hafta", MetaParametreAdlari.AcilisHaftalikHat,
+                () => HaftalikHat, hedefler => HaftalikHat = OdulHatti.Haftalik(Parametreler, hedefler));
+
+            if (HaftalikHatAcik
+                && HaftaDonemi.Suruyor(simdi)
+                && !HaftaDonemi.SonGunBildirildi
+                && HaftaDonemi.Kalan(simdi) <= TimeSpan.FromDays(1))
+            {
+                HaftaDonemi.SonGunBildirildi = true;
+                Pencereler.Ekle(new Pencere(
+                    "hafta_son_gun:" + HaftaDonemi.Kimlik, PencereTuru.Bilgi, MetaParametreAdlari.AcilisHaftalikHat));
+            }
+
+            return bitis;
+        }
+
+        private DonemBitisi? DonemiEsitle(
+            HatDonemi donem,
+            DonemBilgisi? bilgi,
+            DateTime simdi,
+            string ad,
+            string kaynak,
+            Func<OdulHatti> hat,
+            Action<IReadOnlyList<int>?> yeniHat)
+        {
+            DonemBitisi? bitis = null;
+            if (donem.Kimlik != null && (simdi >= donem.Bitis || (bilgi != null && bilgi.Kimlik != donem.Kimlik)))
+            {
+                var oduller = hat().AlinmamislariAl();
+                foreach (var odul in oduller)
+                {
+                    OdulVer(odul, simdi);
+                }
+
+                bitis = new DonemBitisi(donem.Kimlik, oduller);
+                Pencereler.Ekle(new Pencere(ad + "_bitti:" + donem.Kimlik, PencereTuru.Bilgi, kaynak));
+                donem.SonBiten = donem.Kimlik;
+                donem.Kimlik = null;
+                donem.SonGunBildirildi = false;
+
+                // Yeni dönemin tablosu sunucudan gelene kadar parametredeki tabloyla sürer.
+                yeniHat(null);
+            }
+
+            if (bilgi != null && bilgi.Kimlik != donem.SonBiten && simdi < bilgi.Bitis)
+            {
+                if (donem.Kimlik == null)
+                {
+                    donem.Kimlik = bilgi.Kimlik;
+                    if (bilgi.BasamakHedefleri != null && hat().Basamak == 0 && hat().BasamakPuani == 0)
+                    {
+                        yeniHat(bilgi.BasamakHedefleri);
+                    }
+                }
+
+                donem.Bitis = bilgi.Bitis;
+            }
+
+            return bitis;
+        }
+
+        /// <summary>
+        /// Albüm sezonunu sunucuyla eşitler (GDD 9.7.1, 9.7.11): süresi dolan sezonun alınmamış ödülleri verilir ve
+        /// bitiş penceresi kuyruğa girer; koşullar sağlanıyorsa bildirilen sezona girilir.
+        /// </summary>
+        public DonemBitisi? AlbumSezonunuEsitle(DonemBilgisi? bilgi, DateTime simdi)
+        {
+            DonemBitisi? bitis = null;
+            var album = AlbumSezonu;
+            if (album.Katildi && (simdi >= album.Bitis || (bilgi != null && bilgi.Kimlik != album.Kimlik)))
+            {
+                string kimlik = album.Kimlik!;
+                var oduller = album.Bitir();
+                foreach (var odul in oduller)
+                {
+                    OdulVer(odul, simdi);
+                }
+
+                bitis = new DonemBitisi(kimlik, oduller);
+                Pencereler.Ekle(new Pencere("album_bitti:" + kimlik, PencereTuru.Bilgi, MetaParametreAdlari.AcilisAlbum));
+            }
+
+            if (bilgi != null)
+            {
+                if (album.Katildi)
+                {
+                    album.BitisiGuncelle(bilgi.Bitis);
+                }
+                else
+                {
+                    album.Katil(bilgi.Kimlik, bilgi.Bitis, EnYuksekBolum, simdi);
+                }
+            }
+
+            return bitis;
         }
 
         /// <summary>Sezon bitince yeni sezon ücretsiz hatla başlar (GDD 9.8 durumlar).</summary>
@@ -121,6 +303,22 @@ namespace CatRoyal.Cekirdek.Meta
             if (paket.CarpanDakika > 0)
             {
                 Carpan.EtkinlikCarpaniEkle(Parametreler.TamSayi(MetaParametreAdlari.CarpanBiletiKati), paket.CarpanDakika, simdi);
+            }
+
+            // GDD 9.7.2: kart paketleri ödüllerden gelir; aktif albüm sezonu yoksa verilmez (9.6.5).
+            foreach (var cift in paket.AlbumEsyalari)
+            {
+                AlbumSezonu.PaketEkle(cift.Key, cift.Value, simdi);
+            }
+
+            foreach (string kozmetik in paket.Kozmetikler)
+            {
+                Kozmetikler.Add(kozmetik);
+            }
+
+            foreach (var cift in paket.OlayEsyalari)
+            {
+                OlayEsyalari[cift.Key] = (OlayEsyalari.TryGetValue(cift.Key, out int var) ? var : 0) + Math.Max(0, cift.Value);
             }
         }
 
@@ -186,6 +384,18 @@ namespace CatRoyal.Cekirdek.Meta
         /// <summary>Basamaklı toplama olaylarına, harita keşfe ve ortaklı atışa verilen puan (GDD 9.9.4, 10.9.2).</summary>
         public int OlayPuani { get; internal set; }
 
+        /// <summary>Olay puanının çarpansız tabanı; çarpılabilir olmayan olaylar bunu alır (GDD 10.0.5).</summary>
+        public int OlayTabanPuani { get; internal set; }
+
+        /// <summary>Bölüm kazanılınca kalan hamle; "artan hamleler bitti" bilgisiyle olaylara iletilir (GDD 7.6.3).</summary>
+        public int KalanHamle { get; internal set; }
+
+        /// <summary>Bölüm kaybedildi mi (başlamış bölümden çıkmak dahil, GDD 9.1.3)?</summary>
+        public bool Kaybedildi { get; internal set; }
+
+        /// <summary>Bölümün zorluk etiketi; puanı etikete göre veren olaylar kullanır (GDD 10.1.4).</summary>
+        public ZorlukEtiketi Etiket { get; internal set; }
+
         public bool CanDustu { get; internal set; }
     }
 
@@ -202,6 +412,7 @@ namespace CatRoyal.Cekirdek.Meta
         private int _carpanIsareti = 1;
         private bool _sonucIslendi;
         private bool _ilkOynayis;
+        private bool _kurtarma;
 
         public BolumAkisi(Oyuncu oyuncu, ZorlukEtiketTablosu etiketler, int bolum)
         {
@@ -220,6 +431,26 @@ namespace CatRoyal.Cekirdek.Meta
 
         /// <summary>Kurtarma bölümünde başarısızlıkta can düşmez (GDD 10.2.8).</summary>
         public bool KayiptaCanDusmez { get; set; }
+
+        /// <summary>
+        /// Bölüm bir kurtarma bölümü olarak mı oynanıyor (GDD 10.2)? Kazanılınca etikete bağlı para yerine
+        /// parametre: kurtarma_kazanma_parasi verilir (10.2.4) ve normal ilerleme sürer; kayıpta can düşmez (10.2.8).
+        /// </summary>
+        public bool Kurtarma
+        {
+            get => _kurtarma;
+            set
+            {
+                _kurtarma = value;
+                KayiptaCanDusmez = value;
+            }
+        }
+
+        /// <summary>
+        /// Bonus bölümü mü (GDD 8.7)? Bonus bölümleri zorluk eğrisinin dışındadır: beceri ölçümüne ve zorluğa bağlı
+        /// rastgeleliğe girmez (8.7.2).
+        /// </summary>
+        public bool Bonus { get; set; }
 
         /// <summary>
         /// Yarışmalı bölümde yarışma sisteminden gelen ve hamle sayısına eklenen değer (GDD 9.11.2). Yalnızca
@@ -256,10 +487,10 @@ namespace CatRoyal.Cekirdek.Meta
 
             var p = _oyuncu.Parametreler;
             _carpanIsareti = _oyuncu.Carpan.BolumeGir(simdi, _oyuncu.CarpanSecimiAcik);
-            _ilkOynayis = Bolum >= _oyuncu.EnYuksekBolum;
+            _ilkOynayis = Bolum >= _oyuncu.EnYuksekBolum && !Bonus && !Kurtarma;
 
             var oturum = BolumKurucu.Kur(
-                veri, bayraklar, p, tohum, olaylar, _oyuncu.Zorluk.RastgelelikAgirligi(Etiket),
+                veri, bayraklar, p, tohum, olaylar, Bonus ? 0 : _oyuncu.Zorluk.RastgelelikAgirligi(Etiket),
                 Yarismali ? YarismaHamleEki!.Value : 0);
             oturum.DolumGostergesiAcik = _oyuncu.Kapilar.Acik(MetaParametreAdlari.AcilisDolumGostergesi, _oyuncu.EnYuksekBolum);
             oturum.YedekHamleHakki = _oyuncu.YedekHamleHakkiHazir;
@@ -396,7 +627,7 @@ namespace CatRoyal.Cekirdek.Meta
         /// </summary>
         public BolumSonucu SonucuIsle(DateTime simdi, bool cikildi = false)
         {
-            var sonuc = new BolumSonucu();
+            var sonuc = new BolumSonucu { Etiket = _etiketler.Etiket(Bolum) };
             if (Oturum == null || _sonucIslendi)
             {
                 return sonuc;
@@ -407,7 +638,9 @@ namespace CatRoyal.Cekirdek.Meta
             {
                 _sonucIslendi = true;
                 sonuc.Kazanildi = true;
-                sonuc.Para = EtiketOdulleri.KazanmaParasi(p, Etiket, Oturum.KalanHamle);
+                sonuc.Para = Kurtarma
+                    ? p.TamSayi(Tasarim.TasarimParametreAdlari.KurtarmaKazanmaParasi)
+                    : EtiketOdulleri.KazanmaParasi(p, Etiket, Oturum.KalanHamle);
                 sonuc.Yildiz = p.TamSayi(MetaParametreAdlari.BolumBasinaYildiz);
                 _oyuncu.Cuzdan.Ekle(sonuc.Para);
                 _oyuncu.Yildiz += sonuc.Yildiz;
@@ -422,6 +655,8 @@ namespace CatRoyal.Cekirdek.Meta
                 }
 
                 // GDD 9.9.3, 9.10.2: haftalık hat ve basamaklı toplama olayları puanı çarpanla alır.
+                sonuc.OlayTabanPuani = taban;
+                sonuc.KalanHamle = Oturum.KalanHamle;
                 sonuc.OlayPuani = taban * _carpanIsareti;
                 if (_oyuncu.HaftalikHatAcik)
                 {
@@ -435,8 +670,12 @@ namespace CatRoyal.Cekirdek.Meta
                 if (Bolum >= _oyuncu.EnYuksekBolum)
                 {
                     _oyuncu.EnYuksekBolum = Bolum + 1;
+
+                    // GDD 9.4.5: açılış bölümüne ulaşılınca özelliğin pencereleri akışa eklenir.
+                    OzellikTanitimlari.KapilariDenetle(_oyuncu);
                 }
 
+                _oyuncu.Olaylar.BolumSonucunuDagit(sonuc, Kurtarma, simdi);
                 return sonuc;
             }
 
@@ -453,6 +692,8 @@ namespace CatRoyal.Cekirdek.Meta
                 _oyuncu.KayipKaydet();
                 _oyuncu.Zorluk.BasarisizlikKaydet(Bolum, _ilkOynayis && !Yarismali);
                 _teklif.Sifirla();
+                sonuc.Kaybedildi = true;
+                _oyuncu.Olaylar.BolumSonucunuDagit(sonuc, Kurtarma, simdi);
             }
 
             // AK-13 A: "baştan başlatılmalı" durumunda can düşmez ve kayıp sayılmaz.

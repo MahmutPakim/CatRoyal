@@ -551,6 +551,7 @@ namespace CatRoyal.Cekirdek.Testler.Kurallar
         public void Risk_basamaklarinda_kayip_kurali()
         {
             var olay = new RiskBasamaklariOlayi("risk", Simdi + TimeSpan.FromDays(3), P);
+            olay.Gir();
             int hak = P.TamSayi(MetaParametreAdlari.RiskBasamakSansHakki);
             var hedefler = P.TamSayiListesi(MetaParametreAdlari.RiskBasamakHedefleri);
 

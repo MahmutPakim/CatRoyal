@@ -19,8 +19,10 @@ namespace CatRoyal.Cekirdek.Meta
         private readonly HashSet<int> _alinanUcretsiz = new HashSet<int>();
         private readonly HashSet<int> _alinanPremium = new HashSet<int>();
 
-        public OdulHatti(IReadOnlyList<int> basamakHedefleri, int hazneAsamaPuani, int hazneAsamaParasi, int hazneHedefi)
+        public OdulHatti(
+            IReadOnlyList<int> basamakHedefleri, int hazneAsamaPuani, int hazneAsamaParasi, int hazneHedefi, int kilometreTasiAraligi = 0)
         {
+            KilometreTasiAraligi = Math.Max(0, kilometreTasiAraligi);
             if (basamakHedefleri.Count == 0 || basamakHedefleri.Any(h => h < 1))
             {
                 throw new ArgumentException("Basamak hedefleri boş olamaz ve her hedef en az 1 olmalı.");
@@ -33,11 +35,13 @@ namespace CatRoyal.Cekirdek.Meta
         }
 
         /// <summary>Sezon ödül hattı (GDD 9.8.2, 9.8.8).</summary>
-        public static OdulHatti Sezon(ParametreTablosu p)
+        /// <param name="p">Parametre tablosu.</param>
+        /// <param name="ozelHedefler">Deney grubunun basamak tablosu (GDD 9.8.11); verilmezse parametredeki tablo.</param>
+        public static OdulHatti Sezon(ParametreTablosu p, IReadOnlyList<int>? ozelHedefler = null)
         {
-            var hedefler = SezonBasamakHedefleri(p);
+            var hedefler = ozelHedefler ?? SezonBasamakHedefleri(p);
             int beklenen = p.TamSayi(MetaParametreAdlari.SezonHattiBasamakSayisi);
-            if (hedefler.Count != beklenen)
+            if (ozelHedefler == null && hedefler.Count != beklenen)
             {
                 throw new ParametreHatasi(
                     $"'{MetaParametreAdlari.SezonHattiBasamakHedefleri}' {hedefler.Count} basamak veriyor; "
@@ -48,15 +52,18 @@ namespace CatRoyal.Cekirdek.Meta
                 hedefler,
                 p.TamSayi(MetaParametreAdlari.HazneAsamaPuani),
                 p.TamSayi(MetaParametreAdlari.HazneAsamaParasi),
-                p.TamSayi(MetaParametreAdlari.SezonHazneHedefi));
+                p.TamSayi(MetaParametreAdlari.SezonHazneHedefi),
+                p.TamSayi(MetaParametreAdlari.KilometreTasiAraligi));
         }
 
         /// <summary>Haftalık ödül hattı (GDD 9.9.2); aşama puanı sezon hattıyla ortaktır.</summary>
-        public static OdulHatti Haftalik(ParametreTablosu p)
+        /// <param name="p">Parametre tablosu.</param>
+        /// <param name="ozelHedefler">Oyuncuya özel basamak tablosu (GDD 9.9.7); verilmezse parametredeki tablo.</param>
+        public static OdulHatti Haftalik(ParametreTablosu p, IReadOnlyList<int>? ozelHedefler = null)
         {
-            var hedefler = p.TamSayiListesi(MetaParametreAdlari.HaftalikHatBasamakHedefleri);
+            var hedefler = ozelHedefler ?? p.TamSayiListesi(MetaParametreAdlari.HaftalikHatBasamakHedefleri);
             int beklenen = p.TamSayi(MetaParametreAdlari.HaftalikHatBasamakSayisi);
-            if (hedefler.Count != beklenen)
+            if (ozelHedefler == null && hedefler.Count != beklenen)
             {
                 throw new ParametreHatasi(
                     $"'{MetaParametreAdlari.HaftalikHatBasamakHedefleri}' {hedefler.Count} basamak veriyor; "
@@ -67,7 +74,8 @@ namespace CatRoyal.Cekirdek.Meta
                 hedefler,
                 p.TamSayi(MetaParametreAdlari.HazneAsamaPuani),
                 p.TamSayi(MetaParametreAdlari.HaftalikHazneAsamaParasi),
-                p.TamSayi(MetaParametreAdlari.HaftalikHazneHedefi));
+                p.TamSayi(MetaParametreAdlari.HaftalikHazneHedefi),
+                p.TamSayi(MetaParametreAdlari.HaftalikKilometreTasi));
         }
 
         /// <summary>
@@ -103,6 +111,55 @@ namespace CatRoyal.Cekirdek.Meta
         }
 
         public int BasamakSayisi => _hedefler.Count;
+
+        /// <summary>Kilometre taşları arasındaki basamak sayısı (GDD 9.8.3, 9.9.2); 0 ise kilometre taşı yoktur.</summary>
+        public int KilometreTasiAraligi { get; }
+
+        /// <summary>
+        /// Basamak (0 tabanlı) kilometre taşı mı? Kilometre taşlarında iki hatta da daha büyük paketler ve kozmetikler
+        /// verilir (GDD 9.8.3); içerikleri ödül tablosundadır.
+        /// </summary>
+        public bool KilometreTasi(int basamak) =>
+            KilometreTasiAraligi > 0 && basamak >= 0 && basamak < _hedefler.Count && (basamak + 1) % KilometreTasiAraligi == 0;
+
+        private IReadOnlyList<OdulPaketi?> _ucretsizOduller = Array.Empty<OdulPaketi?>();
+        private IReadOnlyList<OdulPaketi?> _premiumOduller = Array.Empty<OdulPaketi?>();
+
+        /// <summary>
+        /// Basamakların ödül içerikleri; sunucudan gelir (GDD 9.8.11, 9.8.12). Listeler basamak sırasıyladır; ödülü
+        /// olmayan basamak null ya da eksik bırakılır. Kaydedilmez: her açılışta yeniden verilir.
+        /// </summary>
+        public void OdulleriAyarla(IReadOnlyList<OdulPaketi?> ucretsiz, IReadOnlyList<OdulPaketi?> premium)
+        {
+            _ucretsizOduller = ucretsiz;
+            _premiumOduller = premium;
+        }
+
+        public OdulPaketi? UcretsizOdul(int basamak) => basamak >= 0 && basamak < _ucretsizOduller.Count ? _ucretsizOduller[basamak] : null;
+
+        public OdulPaketi? PremiumOdul(int basamak) => basamak >= 0 && basamak < _premiumOduller.Count ? _premiumOduller[basamak] : null;
+
+        /// <summary>
+        /// Alınabilir durumdaki bütün ödülleri alınmış sayar ve içeriklerini döndürür (GDD 9.8.10, 9.9.6). Dolmuş
+        /// hazne de alınır. Yorum: dolmamış hazne "alınmamış ödül" değildir; dönem sonunda verilmez.
+        /// </summary>
+        public List<OdulPaketi> AlinmamislariAl()
+        {
+            var oduller = new List<OdulPaketi>();
+            for (int i = 0; i < Basamak; i++)
+            {
+                if (UcretsizOduluAl(i) && UcretsizOdul(i) is { } ucretsiz) oduller.Add(ucretsiz);
+                if (PremiumOduluAl(i) && PremiumOdul(i) is { } premium) oduller.Add(premium);
+            }
+
+            int hazne = HazneyiAl();
+            if (hazne > 0)
+            {
+                oduller.Add(new OdulPaketi { Para = hazne });
+            }
+
+            return oduller;
+        }
 
         /// <summary>Geçilen basamak sayısı; son ödül basamağı geçildiğinde <see cref="BasamakSayisi"/> olur.</summary>
         public int Basamak { get; private set; }

@@ -4,10 +4,10 @@ Tarih: 2026-11-15. Dayanak: `docs/GDD.md` kural numaraları, `Cekirdek/` ve `Uni
 
 ## Mevcut durum özeti
 
-- **Çekirdek oynanış (GDD 2–7) büyük ölçüde tamam.** Eşleşme, özel taşlar, 10 kombinasyon, düşme/dolgu/karıştırma, engel arketipleri, hedefler, AK-01…AK-15 bayrakları yazılmış. `dotnet test`: 1036/1036 geçiyor; `test_vakalari.md`'deki bütün vakaların testi var.
-- **Meta (GDD 9) kısmen var:** can, cüzdan, envanter, günlük ödül, alan inşası, albümün temeli, sezon/haftalık hat, çarpan ve düzey seçimi, yarı dinamik zorluk ve beceri ölçümü, ek hamle teklifi, mağaza/teklifler, ilerleme kapıları.
-- **Olaylar (GDD 10) neredeyse yok:** yalnızca ortak iskelet, basamaklı toplama şablonu ve risk basamaklarının kayıp kuralı var. Diğer olaylar için yalnızca durum `enum`'ları tanımlı.
-- **Bölüm içeriği (GDD 8):** 6 bölüm var; tasarım bantlarını denetleyen araç, bonus/kurtarma takvimi ve paket dağıtımı yok.
+- **Çekirdek oynanış (GDD 2–7) büyük ölçüde tamam.** Eşleşme, özel taşlar, 10 kombinasyon, düşme/dolgu/karıştırma, engel arketipleri, hedefler, AK-01…AK-15 bayrakları yazılmış. `dotnet test`: 1167/1167 geçiyor; `test_vakalari.md`'deki bütün vakaların testi var.
+- **Meta (GDD 9) çekirdekte büyük ölçüde tamam (Aşama 3.1–3.6):** can, cüzdan, envanter, günlük ödül, alan inşası, sezonluk albüm, sezon/haftalık hat ve dönemleri, çarpan ve düzey seçimi, yarı dinamik zorluk ve beceri ölçümü, ek hamle teklifi, mağaza/teklifler, ilerleme kapıları, pencere kuyruğu. Eksik: reklam ve satın alma SDK'ları (3.7), ekranlar (S.10).
+- **Olaylar (GDD 10):** ortak altyapı var (Aşama 4): olay yöneticisi, basamaklı toplama şablonu, risk basamakları, çarpan etkinlikleri. Hız yarışı ve harita keşif (Aşama 5), takımlar, takım yarışı ve ortaklı atış (Aşama 6) yazıldı. Eksik: fırlat-birleştir mini oyunu (Aşama 7).
+- **Bölüm içeriği (GDD 8):** doğrulayıcı, tanıtım/bonus/kurtarma takvimleri ve paket dağıtımının mantığı var (Aşama 2.1–2.7). İçerik yok: `veri/bolumler` altındaki 6 bölüm mekanik örneğidir ve tasarım kurallarını bilerek karşılamaz.
 - **Kalıcılık ve sunucu arayüzü var (Aşama 0):** `Oyuncu` kaydedilip yükleniyor (`OyuncuKaydi`, Unity'de `OyuncuDeposu`). Sunucu tarafı işaretli kısımlar `ISunucu` üzerinden geçiyor; şimdilik yalnızca yerel sahte uygulaması var, gerçek sunucu yok.
 - **Sunum:** Unity tarafı OnGUI prototipi. 13 `sunum_` parametresinin yalnızca 4'ü kullanılıyor. Meta ekranlarının çoğu yok.
 
@@ -42,6 +42,35 @@ Tarih: 2026-11-15. Dayanak: `docs/GDD.md` kural numaraları, `Cekirdek/` ve `Uni
 
 ## Aşama 2 — Bölüm içeriği ve dağıtım (GDD 8)
 
+**Durum: 2.1–2.7 tamamlandı (2026-11-16); 2.8 ertelendi.** Kod: `Cekirdek/Tasarim/` (takvimler, doğrulayıcı, paketler), `Cekirdek/Meta/Kurtarma.cs`, `Araclar/BolumDogrula/`. Testler: `Asama2Testleri`.
+
+Doğrulayıcıyı çalıştırma (çıkış kodu: 0 hata yok, 1 hata var):
+
+```bash
+dotnet run --project Araclar/BolumDogrula -- veri/bolumler docs/parametreler.csv --olculer
+```
+
+Klasördeki `bolum_NNN.json` ve `kurtarma_NNN.json` dosyalarını okur. Yol verilmezse depodaki varsayılanları kullanır; `--olculer` bölüm başına ölçü tablosunu da yazar.
+
+Verilen kararlar (GDD'de yazmayanlar):
+
+- **Toleranslar:** paket ortalamaları parametre değerinden %25'ten fazla saparsa uyarı; ortalamalar en az 10 olağan bölümle denetlenir; renk hedefli bölüm payı %25'i aşarsa uyarı. Sabitler `BolumDogrulayici` içinde.
+- **Hata / uyarı ayrımı:** tek bölümün sınırları (boyut, renk, hamle bandı, engel türü, hedef tutarlılığı, tanıtım kuralları) hata; ortalamalar, zor bölüm ritmi ve boş geçen tanıtım sırası uyarı.
+- **Tanıtım kayması:** takvimdeki tanıtım bölümü bonus ya da kurtarma bölümüne denk gelirse bir sonraki olağan bölüme kayar. Öneri değerlerle 37. bölümde böyle oluyor (tanıtım 38'e kayar).
+- **Orta dönemin sonu:** parametre dosyasında yok; tanıtım takvimi orta dönem ritmini sürdürür, geç dönem denetlenmez.
+- **Para taşı** tanıtım ritmine girmez; bonus bölümünün mekaniğidir.
+- **Zor ritim ve etiket ayrı** (11.2.15): doğrulayıcı ritmi yalnızca hamle farkıyla denetler, etiket tablosuna bakmaz.
+- **Kurtarma teması:** ana tema her n. kurtarma bölümündedir (n = 1 / kurtarma_ana_tema_payi, yuvarlanır); öneri değerle 1., 4., 7. … Ana tema uygulamayla gelir, dönüşümlü temalar indirilir.
+- **Yedek bölüm:** o ilerleme bölümünün kendi olağan dosyasıdır ve olağan bölüm gibi oynanır. Yani kurtarma bağlı her ilerleme bölümünün de bir olağan dosyası olmalı.
+- **Kurtarma ödülü:** etikete bağlı para yerine `kurtarma_kazanma_parasi`; yıldız ve hat puanı olağan bölümdeki gibi.
+- **Öne çekme (10.2.6):** hangi bölümlere çekileceği sunucu yapılandırmasından liste olarak gelir (`OneCekilenKurtarmaBolumleri`).
+
+Açık kalanlar:
+
+- **2.8 içerik ertelendi (karar, 2026-11-16):** ilk 50 bölüm ve kurtarma bölümleri elle tasarlanacak; zorluk ayarı önemli olduğu için üretilmeyecek. Tasarlanan bölümler doğrulayıcıdan geçirilir. Yer kararı açık: örnek bölümler testlerde kullanıldığı için gerçek paket ayrı bir klasöre konmalı.
+- **Unity bağlı değil:** oyun sahnesi hâlâ `veri/bolumler` klasöründeki dosyaları sırayla oynatıyor; bölüm kitaplığı, kurtarma akışı ve bonus işareti içerik gelince bağlanacak. İndirilen paketin diske yazılması da o zaman (`BolumPaketiVerisi.Yaz` hazır).
+- **Harita görseli** yalnızca kimlik olarak var (`harita_NNN`); görselin kendisi S.9.
+
 | # | İş | GDD |
 |---|---|---|
 | 2.1 | Bölüm doğrulayıcı (editör/CLI aracı): boyut, renk sayısı, hamle bandı ve tabanı, hedef/hamle oranı, engel yoğunluğu, oynanmayan ve boş başlayan hücre payı, engel türü sınırı, hedef adedi ile tahta tutarlılığı | 8.1.2, 8.1.4, 8.1.5, 8.2, 8.3, 8.4.3–8.4.5, 8.5 |
@@ -57,6 +86,31 @@ Tarih: 2026-11-15. Dayanak: `docs/GDD.md` kural numaraları, `Cekirdek/` ve `Uni
 
 ## Aşama 3 — Meta sistemleri tamamla (GDD 9)
 
+**Durum: 3.1–3.6 çekirdekte tamamlandı (2026-11-16); 3.7 açık.** Kod: `Cekirdek/Meta/Pencereler.cs` (pencere kuyruğu, özellik tanıtımları, olay kapıları), `Donemler.cs`, `AlbumSezonu.cs`; `AlanVeAlbum.cs`, `OdulHatti.cs`, `Oyuncu.cs` eklemeleri. Testler: `Asama3Testleri`. Yeni durumların hepsi oyuncu kaydına yazılıyor.
+
+Verilen kararlar (GDD'de yazmayanlar):
+
+- **Pencere sırası:** önce engel tanıtımları (8.6.7), sonra kaynakların kuyruğa giriş sırası; bir kaynağın pencereleri tanıtım → başlangıç → bilgi → ödül alma → otomatik. Açık pencere sonradan gelen yüzünden yerini kaybetmez. Atlanan tanıtım gösterilmiş sayılır.
+- **Hangi özelliklerin tanıtımı var:** liste `OzellikTanitimlari` içinde; olayların pencereleri Aşama 4'te olay yöneticisinden gelecek.
+- **Eski kayıt:** pencere kaydı olmayan kayıt yüklenince o an açık olan özelliklerin tanıtımları gösterilmiş sayılır.
+- **Oynanabilir alan sayısı (9.6.7):** ilk bölümü yayımlanmış alan oynanabilir; en az bir alan var (yukarı yuvarlama).
+- **Dönem sonu:** dolmamış hazne "alınmamış ödül" sayılmaz ve verilmez; dolmuş hazne verilir.
+- **Dönem değişimi:** dönem, süresi dolunca ya da sunucu başka bir kimlik bildirince biter. Sunucuya ulaşılamasa da süresi dolan dönem biter. Aynı kimlikli dönem yeniden başlatılmaz.
+- **Özel basamak tablosu (9.8.11, 9.9.7):** yalnızca yeni dönem başlarken uygulanır; dönem ortasında gelen tablo ilerlemeyi bozmaz.
+- **Albüm kademesi ve yıldızı:** sunucu vermezse varsayılan dağılım: setlerin ilk üçte biri sıradan, ikinci üçte biri değerli, kalanı çok değerli; set içinde kart sırası ilerledikçe yıldız artar.
+- **Paket ağırlıkları:** parametre dosyasında yok; paket tanımıyla (sunucu) gelir. Kartın ağırlığı = kademe ağırlığı × yıldız ağırlığı.
+- **Acıma kuralı (9.7.6):** eksik kart olasılığı = ağırlıkların verdiği olasılık + acima_katsayisi × çift sayısı. Sayılan çiftler son yeni karttan beri art arda gelenlerdir; toplam çift sayısı kullanılsaydı kural birkaç paketten sonra hep %100 olurdu.
+- **Albüm sezonu sonu:** açılmamış paketler ve çift yıldızları sezonla birlikte biter. Sezona koşullar sağlanınca kendiliğinden girilir.
+- **Rozetli aşama:** büyük ödül alındıktan sonra bir sonraki aşamaya geçilince setler boşalır.
+
+Açık kalanlar:
+
+- **3.7 reklam ve satın alma SDK'ları** bağlanmadı: mağaza hesapları, ürün kimlikleri ve reklam ağı seçimi gerekiyor. Çekirdek tarafı hazır (`ReklamCaniVer`, `ReklamParasiVer`, `ReklamlaEkHamleAl`, `ParaMagazasi.SatinAlimTamamlandi`).
+- **Günlük ödül penceresinin ana ekranda kendiliğinden açılması (9.5.2)** kuyruğa bağlanmadı; ana ekran yok (S.10).
+- **Alan sandığının takviye, ek araç ve kart paketi içeriği (9.6.5)** hâlâ yalnızca para veriyor.
+- **Ödül içerikleri** (hat basamakları, set ödülleri, paket tanımları) sunucudan gelir ve kaydedilmez; sahte sunucuda bunları taşıyan bir tablo henüz yok.
+- **Unity:** bu aşamanın hiçbir ekranı yok (S.10).
+
 | # | İş | GDD |
 |---|---|---|
 | 3.1 | Kapı ayrıntıları: olay simgesi kapısı, kısmi kilit önizlemesi, bölüm öncesinde azami olay sayısı, ikinci olaya katılma süresi | 9.4.3, 9.4.4, 9.4.6, 9.4.7 |
@@ -69,6 +123,27 @@ Tarih: 2026-11-15. Dayanak: `docs/GDD.md` kural numaraları, `Cekirdek/` ve `Uni
 
 ## Aşama 4 — Ortak olay altyapısı (GDD 10.0, 10.9)
 
+**Durum: çekirdekte tamamlandı (2026-11-16).** Kod: `Cekirdek/OlayIskeletleri/OlayYoneticisi.cs`, `OlayIskeleti.cs` eklemeleri; `Oyuncu.Olaylar`. Testler: `Asama4Testleri`. Olayların ilerlemesi ve ödül içerikleri oyuncu kaydına yazılıyor; sunucuya ulaşılamasa da süresi dolan olay biter ve ödülünü verir.
+
+Verilen kararlar (GDD'de yazmayanlar):
+
+- **Aktarılan toplanabilir (10.0.6):** henüz bir basamağı doldurmamış kısım (içinde bulunulan basamağın puanı). Aynı türün bir sonraki olayına geçer; aktarılıp aktarılmayacağı takvim kaydından gelir.
+- **Varsayılan toplama tablosu:** parametre dosyasında toplama olayının yalnızca basamak sayısı var. Sunucu tablo vermezse hedefler sezon hattının ilk basamaklarından alınır.
+- **Tür açılışı (10.9.1):** n. toplama olayı türü, ilk toplama olayının açılışından n × olay_turu_acilis_araligi bölüm sonra açılır; tür sırası takvim kaydından gelir.
+- **Çarpan etkinliği (10.9.6):** ayrı bir olay kurmaz; çarpan bileti kapısı açık oyuncuya etkinliğin bitimine kadar süren bir etkinlik çarpanı verir, bir kez.
+- **Bağımlılık (9.4.8):** engelleyen ve ödülü zorla aldıran olaylar takvim kaydında listelenir; engelleyen olay açıkken engellenen olay puan almaz ve penceresi gösterilmez.
+- **Risk olayına giriş:** olay, oyuncu girene kadar ilerlemez (durum tablosundaki "olaya girildi"). Var olan risk testi buna göre güncellendi.
+- **Çıkış uyarısı (10.5.5):** yalnızca çıkış bir şans hakkı götürecekse istenir.
+- **Bölüm öncesi sırası (10.0.9):** bitişi en yakın olay önce.
+- **Kapısına hiç ulaşılmamış olayın** bitiş penceresi gösterilmez.
+
+Açık kalanlar:
+
+- **Risk basamak ödülleri:** `risk_basamak_odulleri` serbest metin bir öneri; ayrıştırılmıyor. Ödüller her olay gibi takvim kaydından gelir.
+- **"Artan hamleler bitti" bilgisi** olaylara iletiliyor ama onu kullanan olay (hız yarışı, 10.1.6) Aşama 5'te.
+- **Olay eşyaları** (bilye, enerji) oyuncuda birikiyor; onları harcayan olaylar Aşama 5–6'da.
+- **Unity:** olay ekranı yok (S.11); oyun sahnesi takvimi uygulamıyor.
+
 | # | İş | GDD |
 |---|---|---|
 | 4.1 | Olay yöneticisi: sunucu takviminden olayları kurar, kazanım/kayıp/artan hamle bilgisini dağıtır, bağımlılık ve kapatmayı uygular | 10.0.1–10.0.5, 7.6.3 |
@@ -78,6 +153,29 @@ Tarih: 2026-11-15. Dayanak: `docs/GDD.md` kural numaraları, `Cekirdek/` ve `Uni
 
 ## Aşama 5 — Sosyal gerektirmeyen olaylar
 
+**Durum: çekirdekte tamamlandı (2026-11-16).** Kod: `Cekirdek/OlayIskeletleri/HizYarisiOlayi.cs`, `HaritaKesifOlayi.cs`; `OlayYoneticisi.Ilerle`. Testler: `Asama5Testleri`. İki olay da sahte sunucuyla çalışıyor ve durumları (harita ve ödül içerikleri dahil) oyuncu kaydına yazılıyor. Oyuncuya sunucu kimliği eklendi (`Oyuncu.Kimlik`).
+
+Verilen kararlar (GDD'de yazmayanlar):
+
+- **Hız yarışında aşama = katılım:** her katılım bir aşamadır ve kendi grubunu alır; aşama sayısı azami katılımla sınırlanır.
+- **Hız yarışı çarpılabilir değil:** puan kazanılan bölüm sayısına dayanır (normal 1, zor ve üstü 2); çarpan uygulanmaz.
+- **Hız yarışı ödül sırası:** takvim kaydında [0] birincilik ödülü, [n] n. aşamanın ödülü. `hiz_yarisi_birincilik_odulu` serbest metin bir öneri; ayrıştırılmıyor.
+- **Yerel sıralama:** son bilinen liste, oyuncunun güncel puanıyla yeniden sıralanır; eşitlikte oyuncu önde. Kalan hamle toplamı tutuluyor ama eşitlik bozmada kullanılmıyor (10.1.6 düşük güvenli bir öneri ve sıralama sunucuda).
+- **Olay biterken süren yarış** yerel sıralamayla kapanır ve ödülü kendiliğinden verilir.
+- **Harita keşifte ilerleme:** tamamlanan yaprak görevlerin sayıca oranı.
+- **Hat basamakları harcanan enerjiyle dolar** ("harcanan enerji ayrıca tutulur", 10.4.2). Sunucu hedef vermezse hedefler haritanın toplam maliyetine eşit aralıklarla yayılır.
+- **Hatlar kademelidir:** yüksek hat düşük hattın ödüllerini de açar; hat yalnızca yükseltilir.
+- **Enerji üst sınırı** eldeki enerjiyedir. Ödülden gelen enerji sınırı aşarsa fazlası oyuncuda bekler.
+- **"Yeterli süre" (10.4 durumlar):** genel katılma eşiği kullanılır (`ikinci_olay_asgari_sure_dk`).
+- **Son şans süresi:** parametre dosyasında yok; sunucu vermezse bitişten bir gün önce başlar.
+- **Günlük teklif:** teklifler pahalıdan uyguna sıralı segmentlerdir; alınmayan günün ertesinde bir sonraki segment önerilir, en uygun segmentte kalınır.
+
+Açık kalanlar:
+
+- **Sınırsız sürelerin yarışmalı olay bölümlerinde duraklatılması** (9.3.6, 11.2.18 önerisi) uygulanmadı.
+- **Harita keşifin tanıtımı** ortak olay pencereleriyle geliyor; olaya özel ayrı bir akış yok.
+- **Unity:** iki olayın da ekranı yok (S.11); oyun sahnesi `OlayYoneticisi.Ilerle`'yi çağırmıyor.
+
 | # | İş | GDD | Neden bu sırada |
 |---|---|---|---|
 | 5.1 | Kurtarma bölümleri → **Aşama 2.7'ye taşındı.** Burada yalnızca risk basamaklarıyla etkileşimi kalır (4.4'te). | 10.2, 10.5.7 | — |
@@ -85,6 +183,30 @@ Tarih: 2026-11-15. Dayanak: `docs/GDD.md` kural numaraları, `Cekirdek/` ve `Uni
 | 5.3 | Harita keşif: enerji, görev maliyetleri, harita açma, sandık eşikleri, üç hatlı ödül hattı, günlük teklif, son şans | 10.4.1–10.4.9 | En büyük tek oyunculu olay; hat altyapısını (3.4) yeniden kullanır. |
 
 ## Aşama 6 — Sosyal katman
+
+**Durum: çekirdekte tamamlandı (2026-11-16); gerçek sunucu ve fizik tahtası yok.** Kod: `Cekirdek/Sunucu/ISosyalSunucu.cs`, `YerelSahteSosyalSunucu.cs`, `Cekirdek/Meta/Takim.cs` (takım üyeliği, gelen kutusu), `Cekirdek/OlayIskeletleri/TakimYarisiOlayi.cs`, `OrtakliAtisOlayi.cs`; `AlbumSezonu` kart gönderme sayaçları. Testler: `Asama6Testleri`. Hepsi sahte sunucuyla çalışıyor; sahte sunucu birden fazla oyuncuyu aynı anda taşıyor.
+
+Verilen kararlar (GDD'de yazmayanlar):
+
+- **Ayrı sosyal arayüz:** takım, sohbet, gelen kutusu, kart ve ortak işlemleri `ISosyalSunucu`'da; grup ve sıralama `ISunucu`'da kaldı. Takım yarışında takım, grup isteğinde katılımcı olarak geçiyor.
+- **Sohbet:** canlı bağlantı yerine istekle okunuyor; canlı iletim gerçek sunucunun işi.
+- **Takım kurma bedeli** takım kurulunca harcanır; istek başarısızsa para düşmez.
+- **Can isteği bekleme süresi** hem istemcide hem sunucuda denetlenir; sunucu reddederse istek gönderilmemiş sayılır.
+- **Gönderilen kart gönderenin albümünde kalır.** Çift kartlar çekildiği anda yıldıza dönüştüğü için (9.7.8) elde ayrı kopya yok; oyuncu sahip olduğu bir kartın kopyasını gönderir. Günlük sınır bunu dengeliyor. Kopyanın eksilmesi isteniyorsa albümün kart başına adet tutması gerekir.
+- **Başka sezonun kartı** toplanınca boşa gider.
+- **Takım yarışı ve hız yarışı çarpanla katlanmaz.**
+- **Takım yarışı sonucu** süre dolduktan sonra üç gün oyuncuyu bekler; kapatılmazsa hak edilen ödül kendiliğinden verilir (sunucuya bildirim gitmeden).
+- **Sıra ödülü:** sunucu listesi yoksa `takim_yarisi_sira_odulleri` içindeki para; listede karşılığı olmayan sıranın ödülü yok.
+- **Ortaklı atışta ödül sırası:** basamak ödülleri, ardından büyük ödül. Büyük ödül maskot son evresine ulaştıysa verilir.
+- **Ortaklı atışta son liste** en çok bir saat beklenir.
+- **Sahte sunucunun seçimleri** (etkinlik düzeyi eşikleri, önerilen takımlar, lider devri, ortak puan hızı) `YerelSahteSosyalSunucu` başında yazılı.
+
+Açık kalanlar:
+
+- **Fizik atış tahtası (10.6.3)** çekirdekte yok: `AtisYap` atışın puanını sonuç olarak alır. Tahtanın kendisi Unity'de yazılacak (S.11).
+- **Gerçek sunucu:** canlı sohbet, öneri algoritması, katılma koşulu, puan doğrulama (10.7.8, 10.6.6).
+- **Arkadaş listesi** yok; kart ve ortak daveti verilen oyuncu kimliğine gider.
+- **Unity:** hiçbir ekranı yok (S.10, S.11).
 
 | # | İş | GDD |
 |---|---|---|

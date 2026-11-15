@@ -55,6 +55,65 @@ namespace CatRoyal.Cekirdek.Meta
 
         public List<string> Kozmetikler { get; } = new List<string>();
 
+        /// <summary>Paketi kayıt biçimine çevirir; süresi dolunca kendiliğinden verilecek olay ödülleri böyle saklanır.</summary>
+        internal Dictionary<string, object?> DurumuYaz()
+        {
+            Dictionary<string, object?> Sozluk<T>(Dictionary<T, int> kaynak) where T : notnull
+            {
+                var d = new Dictionary<string, object?>();
+                foreach (var cift in kaynak) d[cift.Key.ToString()!] = cift.Value;
+                return d;
+            }
+
+            return new Dictionary<string, object?>
+            {
+                ["para"] = Para,
+                ["can"] = Can,
+                ["sinirsiz_can_dk"] = SinirsizCanDakika,
+                ["yildiz"] = Yildiz,
+                ["carpan_dk"] = CarpanDakika,
+                ["takviyeler"] = Sozluk(Takviyeler),
+                ["takviye_sinirsiz_sn"] = Sozluk(TakviyeSinirsizSaniye),
+                ["olay_esyalari"] = Sozluk(OlayEsyalari),
+                ["album_esyalari"] = Sozluk(AlbumEsyalari),
+                ["kozmetikler"] = new List<object?>(Kozmetikler),
+            };
+        }
+
+        internal static OdulPaketi Oku(Dictionary<string, object?> d)
+        {
+            var paket = new OdulPaketi
+            {
+                Para = Math.Max(0, KayitAlani.TamSayi(d, "para", 0)),
+                Can = Math.Max(0, KayitAlani.TamSayi(d, "can", 0)),
+                SinirsizCanDakika = Math.Max(0, KayitAlani.TamSayi(d, "sinirsiz_can_dk", 0)),
+                Yildiz = Math.Max(0, KayitAlani.TamSayi(d, "yildiz", 0)),
+                CarpanDakika = Math.Max(0, KayitAlani.TamSayi(d, "carpan_dk", 0)),
+            };
+
+            void Takviye(string ad, Dictionary<TakviyeTuru, int> hedef)
+            {
+                foreach (var cift in KayitAlani.Nesne(d, ad))
+                {
+                    if (Enum.TryParse(cift.Key, out TakviyeTuru tur) && Enum.IsDefined(typeof(TakviyeTuru), tur))
+                    {
+                        hedef[tur] = KayitAlani.TamSayi(cift.Value, cift.Key);
+                    }
+                }
+            }
+
+            Takviye("takviyeler", paket.Takviyeler);
+            Takviye("takviye_sinirsiz_sn", paket.TakviyeSinirsizSaniye);
+            foreach (var cift in KayitAlani.Nesne(d, "olay_esyalari")) paket.OlayEsyalari[cift.Key] = KayitAlani.TamSayi(cift.Value, cift.Key);
+            foreach (var cift in KayitAlani.Nesne(d, "album_esyalari")) paket.AlbumEsyalari[cift.Key] = KayitAlani.TamSayi(cift.Value, cift.Key);
+            foreach (object? kozmetik in KayitAlani.Dizi(d, "kozmetikler"))
+            {
+                if (kozmetik is string ad) paket.Kozmetikler.Add(ad);
+            }
+
+            return paket;
+        }
+
         /// <summary>
         /// Sıralamalı yarışma ödülü (yarışmalı bölümler ve sıralamalı yarışma olayları) sınırsız can içeriyorsa
         /// süresi parametre: hediye_sinirsiz_can_dk kadardır (GDD 9.1.9). Diğer ödüllerdeki süreler kendi ödül
@@ -147,6 +206,40 @@ namespace CatRoyal.Cekirdek.Meta
         public const string ToplamaOlayiBasamakSayisi = "toplama_olayi_basamak_sayisi";
         public const string RiskBasamakHedefleri = "risk_basamak_hedefleri";
         public const string RiskBasamakSansHakki = "risk_basamak_sans_hakki";
+        public const string AcilisRiskBasamaklari = "acilis_risk_basamaklari";
+        public const string RiskBasamakAzamiToplanabilir = "risk_basamak_azami_toplanabilir";
+        public const string OlayTuruAcilisAraligi = "olay_turu_acilis_araligi";
+        public const string AcilisHizYarisi = "acilis_hiz_yarisi";
+        public const string HizYarisiGrupBoyutu = "hiz_yarisi_grup_boyutu";
+        public const string HizYarisiAsgariKalanDk = "hiz_yarisi_asgari_kalan_dk";
+        public const string HizYarisiPuanNormal = "hiz_yarisi_puan_normal";
+        public const string HizYarisiPuanZor = "hiz_yarisi_puan_zor";
+        public const string HizYarisiAsamaSayisi = "hiz_yarisi_asama_sayisi";
+        public const string HizYarisiAsamaSuresiDk = "hiz_yarisi_asama_suresi_dk";
+        public const string HizYarisiAzamiKatilim = "hiz_yarisi_azami_katilim";
+        public const string SonListeDenemeSayisi = "son_liste_deneme_sayisi";
+        public const string SonListeDenemeAraligiSn = "son_liste_deneme_araligi_sn";
+        public const string AcilisTakim = "acilis_takim";
+        public const string TakimKurmaBedeli = "takim_kurma_bedeli";
+        public const string CanIstekAraligiSaat = "can_istek_araligi_saat";
+        public const string CanYardimOdulu = "can_yardim_odulu";
+        public const string GunlukKartGonderme = "gunluk_kart_gonderme";
+        public const string KartIstekSifirlamaSaat = "kart_istek_sifirlama_saat";
+        public const string AcilisTakimYarisi = "acilis_takim_yarisi";
+        public const string TakimYarisiGrupBoyutu = "takim_yarisi_grup_boyutu";
+        public const string TakimYarisiPuanNormal = "takim_yarisi_puan_normal";
+        public const string TakimYarisiPuanZor = "takim_yarisi_puan_zor";
+        public const string SonSaatlerPenceresiSaat = "son_saatler_penceresi_saat";
+        public const string TakimYarisiAsgariKatki = "takim_yarisi_asgari_katki";
+        public const string TakimYarisiSiraOdulleri = "takim_yarisi_sira_odulleri";
+        public const string AcilisOrtakliAtis = "acilis_ortakli_atis";
+        public const string OrtakliAtisAzamiOrtak = "ortakli_atis_azami_ortak";
+        public const string OrtakliAtisPuanBasamaklari = "ortakli_atis_puan_basamaklari";
+        public const string OrtakliAtisBilyeDonusumu = "ortakli_atis_bilye_donusumu";
+        public const string AcilisHaritaKesif = "acilis_harita_kesif";
+        public const string HaritaKesifAzamiEnerji = "harita_kesif_azami_enerji";
+        public const string HaritaKesifSandikEsikleri = "harita_kesif_sandik_esikleri";
+        public const string HaritaKesifHatBasamak = "harita_kesif_hat_basamak";
         public const string ReklamParaOdulu = "reklam_para_odulu";
         public const string ReklamCanOdulu = "reklam_can_odulu";
         public const string EkHamleReklamSayisi = "ek_hamle_reklam_sayisi";
@@ -158,6 +251,22 @@ namespace CatRoyal.Cekirdek.Meta
         public const string AcilisLiderlikTablosu = "acilis_liderlik_tablosu";
         public const string AcilisArkadasDaveti = "acilis_arkadas_daveti";
         public const string AcilisGorevler = "acilis_gorevler";
+        public const string KismiKilitOnizleme = "kismi_kilit_onizleme";
+        public const string SeviyeOncesiAzamiOlay = "seviye_oncesi_azami_olay";
+        public const string IkinciOlayAsgariSureDk = "ikinci_olay_asgari_sure_dk";
+        public const string AcilisAlanPenceresi = "acilis_alan_penceresi";
+        public const string GorevBildirimiSonBolum = "gorev_bildirimi_son_bolum";
+        public const string AlanBasinaBolum = "alan_basina_bolum";
+        public const string AcilisAlbumIndirme = "acilis_album_indirme";
+        public const string AcilisAlbum = "acilis_album";
+        public const string AlbumSezonGirisAsgariDk = "album_sezon_giris_asgari_dk";
+        public const string KartAzamiYildiz = "kart_azami_yildiz";
+        public const string AcimaKatsayisi = "acima_katsayisi";
+        public const string RozetliAsamaSayisi = "rozetli_asama_sayisi";
+        public const string CiftKartSandikFiyatlari = "cift_kart_sandik_fiyatlari";
+        public const string CiftKartYildizDegeri = "cift_kart_yildiz_degeri";
+        public const string KilometreTasiAraligi = "kilometre_tasi_araligi";
+        public const string HaftalikKilometreTasi = "haftalik_kilometre_tasi";
         public const string AcilisCarpanSecimi = "acilis_carpan_secimi";
         public const string AcilisYarismaliBolumler = "acilis_yarismali_bolumler";
         public const string HediyeSinirsizCanDk = "hediye_sinirsiz_can_dk";
