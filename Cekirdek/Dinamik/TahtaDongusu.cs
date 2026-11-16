@@ -21,62 +21,78 @@ namespace CatRoyal.Cekirdek.Dinamik
         public static void Durult(OyunBaglami baglam, EtkiMotoru motor, List<Olay> olaylar, bool dusme = true)
         {
             motor.DalgayiBitir();
-
-            while (true)
+            while (Adim(baglam, motor, olaylar, dusme))
             {
-                // AK-09 B: rengi tetik anında kilitlenen küre, dalga tamamlanınca ışınlarını gönderir.
-                if (Baslat(motor, EtkiMotoru.KureBeklemesi.Dalga))
+            }
+        }
+
+        /// <summary>
+        /// Durulmanın tek adımı. Hamle girişi adımlar arasında kabul edilebilir (GDD 2.3.9, 11.3.1): oyuncu hamlesi
+        /// önce işlenir, kaskad bir sonraki adıma kalır.
+        /// </summary>
+        /// <param name="tekGuncelleme">
+        /// True ise düşme tek güncelleme ilerler (5.1.1) ve adım orada biter; false ise düşme durulana kadar sürer.
+        /// </param>
+        /// <returns>Bir şey olduysa true; tahta durulduysa false.</returns>
+        public static bool Adim(OyunBaglami baglam, EtkiMotoru motor, List<Olay> olaylar, bool dusme = true, bool tekGuncelleme = false)
+        {
+            // AK-09 B: rengi tetik anında kilitlenen küre, dalga tamamlanınca ışınlarını gönderir.
+            if (Baslat(motor, EtkiMotoru.KureBeklemesi.Dalga))
+            {
+                return true;
+            }
+
+            // GDD 6.3.2, 6.3.3: kırılan üretici ve patlayan tehlike, dalga tamamlandıktan sonra ve düşmeler
+            // başlamadan çevresine yayılır.
+            motor.YayilmalariIsle();
+
+            // Dalga bitmeden düşme başlamaz; dalga bitince boşalan hücreler düşme ve doldurmayla durulur.
+            if (dusme)
+            {
+                if (tekGuncelleme)
                 {
-                    continue;
+                    if (DusmeIsleyici.Guncelle(baglam, olaylar))
+                    {
+                        return true;
+                    }
                 }
-
-                // GDD 6.3.2, 6.3.3: kırılan üretici ve patlayan tehlike, dalga tamamlandıktan sonra ve düşmeler
-                // başlamadan çevresine yayılır.
-                motor.YayilmalariIsle();
-
-                // Dalga bitmeden düşme başlamaz; dalga bitince boşalan hücreler düşme ve doldurmayla durulur.
-                if (dusme)
+                else
                 {
                     DusmeIsleyici.Durult(baglam, olaylar);
-
-                    // GDD 6.3.5: toplama hücresine inen toplanabilir toplanır; boşalan hücre yeniden dolar.
-                    if (Toplayici.Topla(baglam, olaylar))
-                    {
-                        continue;
-                    }
                 }
 
-                // AK-09 A: zincirle vurulan küre rengini tahta durulduktan sonra sayar; ışınlar hemen ardından gider.
-                if (Baslat(motor, EtkiMotoru.KureBeklemesi.Durulma))
+                // GDD 6.3.5: toplama hücresine inen toplanabilir toplanır; boşalan hücre yeniden dolar.
+                if (Toplayici.Topla(baglam, olaylar))
                 {
-                    continue;
+                    return true;
                 }
-
-                // GDD 5.5.1: süren bir işlem yoksa tahtadaki bütün eşleşmeler bulunur ve patlatılır.
-                if (dusme)
-                {
-                    var gruplar = EslesmeBulucu.Bul(baglam.Tahta, baglam.Bayraklar);
-                    if (gruplar.Count > 0)
-                    {
-                        // GDD 2.7.4, 2.7.7: doğum hücresinde eşitlik zorluk ağırlıklı üreteçle bozulur;
-                        // etkisiz ağırlıkta tarama sırası geçerlidir.
-                        var esitlik = baglam.Zorluk.Etkisiz ? null : baglam.Zorluk;
-                        motor.GruplariPatlat(
-                            gruplar,
-                            grup => DogumHucresi.Kaskad(baglam.Tahta, grup, baglam.Bayraklar, esitlik),
-                            kaskad: true);
-                        continue;
-                    }
-                }
-
-                // AK-14 B: çift renk küresinin ikinci rengi, düşme ve kaskad durulduktan sonra seçilir.
-                if (Baslat(motor, EtkiMotoru.KureBeklemesi.KaskadSonu))
-                {
-                    continue;
-                }
-
-                break;
             }
+
+            // AK-09 A: zincirle vurulan küre rengini tahta durulduktan sonra sayar; ışınlar hemen ardından gider.
+            if (Baslat(motor, EtkiMotoru.KureBeklemesi.Durulma))
+            {
+                return true;
+            }
+
+            // GDD 5.5.1: süren bir işlem yoksa tahtadaki bütün eşleşmeler bulunur ve patlatılır.
+            if (dusme)
+            {
+                var gruplar = EslesmeBulucu.Bul(baglam.Tahta, baglam.Bayraklar);
+                if (gruplar.Count > 0)
+                {
+                    // GDD 2.7.4, 2.7.7: doğum hücresinde eşitlik zorluk ağırlıklı üreteçle bozulur;
+                    // etkisiz ağırlıkta tarama sırası geçerlidir.
+                    var esitlik = baglam.Zorluk.Etkisiz ? null : baglam.Zorluk;
+                    motor.GruplariPatlat(
+                        gruplar,
+                        grup => DogumHucresi.Kaskad(baglam.Tahta, grup, baglam.Bayraklar, esitlik),
+                        kaskad: true);
+                    return true;
+                }
+            }
+
+            // AK-14 B: çift renk küresinin ikinci rengi, düşme ve kaskad durulduktan sonra seçilir.
+            return Baslat(motor, EtkiMotoru.KureBeklemesi.KaskadSonu);
         }
 
         private static bool Baslat(EtkiMotoru motor, EtkiMotoru.KureBeklemesi bekleme)

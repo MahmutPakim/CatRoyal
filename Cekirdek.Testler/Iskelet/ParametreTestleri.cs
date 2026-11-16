@@ -14,17 +14,17 @@ namespace CatRoyal.Cekirdek.Testler.Iskelet
         private static ParametreTablosu Tablo => ProjeDosyalari.Parametreler;
 
         [Test]
-        public void Dosya_245_tekil_parametre_tasir()
+        public void Dosya_246_tekil_parametre_tasir()
         {
-            Assert.That(Tablo.Adet, Is.EqualTo(245));
-            Assert.That(Tablo.Hepsi.Select(p => p.Ad).Distinct().Count(), Is.EqualTo(245));
+            Assert.That(Tablo.Adet, Is.EqualTo(246));
+            Assert.That(Tablo.Hepsi.Select(p => p.Ad).Distinct().Count(), Is.EqualTo(246));
         }
 
         [Test]
         public void Tur_sutunu_mekanik_ve_denge_olarak_ayrilir()
         {
             Assert.That(Tablo.Hepsi.Count(p => p.Tur == ParametreTuru.Mekanik), Is.EqualTo(23));
-            Assert.That(Tablo.Hepsi.Count(p => p.Tur == ParametreTuru.Denge), Is.EqualTo(222));
+            Assert.That(Tablo.Hepsi.Count(p => p.Tur == ParametreTuru.Denge), Is.EqualTo(223));
         }
 
         [Test]

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using CatRoyal.Cekirdek.Yapilandirma;
 
@@ -97,6 +98,24 @@ namespace CatRoyal.Cekirdek.Meta
             AylikSeri++;
             SonAlinanGun = gun;
             return true;
+        }
+
+        internal Dictionary<string, object?> DurumuYaz() => new Dictionary<string, object?>
+        {
+            ["son_alinan_gun"] = SonAlinanGun.HasValue ? (object)SonAlinanGun.Value : null,
+            ["haftalik_seri"] = HaftalikSeri,
+            ["aylik_seri"] = AylikSeri,
+            ["set_sirasi"] = SetSirasi,
+        };
+
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            SonAlinanGun = d.TryGetValue("son_alinan_gun", out object? gun) && gun != null
+                ? KayitAlani.UzunSayi(gun, "son_alinan_gun")
+                : (long?)null;
+            HaftalikSeri = Math.Max(0, KayitAlani.TamSayi(d, "haftalik_seri", 0));
+            AylikSeri = Math.Max(0, KayitAlani.TamSayi(d, "aylik_seri", 0));
+            SetSirasi = Math.Max(0, KayitAlani.TamSayi(d, "set_sirasi", 0));
         }
 
         /// <summary>

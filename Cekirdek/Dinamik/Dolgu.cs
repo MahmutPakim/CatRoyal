@@ -13,6 +13,33 @@ namespace CatRoyal.Cekirdek.Dinamik
         Tas Uret(OyunBaglami baglam, Konum giris, Konum hedef);
     }
 
+    /// <summary>
+    /// GDD 5.3.4 adım 1, 8.9.2: üst ekrandan kalan taşlar alt ekranın giriş sırasına eklenir ve o sütunun
+    /// girişinden her şeyden önce çıkar. Sıra bitince asıl dolgu kaynağı kullanılır.
+    /// </summary>
+    public sealed class UstEkranKuyrugu : IDolguKaynagi
+    {
+        private readonly IDolguKaynagi _asil;
+        private readonly Dictionary<int, Queue<Tas>> _sira;
+
+        public UstEkranKuyrugu(IDolguKaynagi asil, Dictionary<int, Queue<Tas>> sira)
+        {
+            _asil = asil;
+            _sira = sira;
+        }
+
+        /// <summary>Kuyruğun sardığı asıl dolgu kaynağı.</summary>
+        public IDolguKaynagi Asil => _asil;
+
+        /// <summary>Sütunun sırasında bekleyen taş sayısı.</summary>
+        public int Bekleyen(int sutun) => _sira.TryGetValue(sutun, out var sira) ? sira.Count : 0;
+
+        public Tas Uret(OyunBaglami baglam, Konum giris, Konum hedef) =>
+            _sira.TryGetValue(giris.Sutun, out var sira) && sira.Count > 0
+                ? sira.Dequeue()
+                : _asil.Uret(baglam, giris, hedef);
+    }
+
     /// <summary>Bir dolgu setinin öğesi: sabit bir taş üreticisi ya da rastgele renk.</summary>
     public sealed class DolguOgesi
     {
@@ -53,7 +80,7 @@ namespace CatRoyal.Cekirdek.Dinamik
     /// <summary>
     /// GDD 5.3.4: giriş hücresinden çıkacak taş şu öncelikle belirlenir: (2) sütun için önceden tanımlanmış taş,
     /// (3) sütuna atanmış hedef seti, (4) bölümün rastgele dolgu setleri (engeller dahil), (5) rastgele renk.
-    /// (1) üst ekrandan kalan taşlar çok ekranlı bölümlerle birlikte gelir; henüz yok.
+    /// (1) üst ekrandan kalan taşlar <see cref="UstEkranKuyrugu"/> ile bu kaynağın önüne eklenir.
     /// Set yolundan gelen renkli taşlar ayarlı dolgudan geçer (5.3.6); düz rastgele renk yolu geçmez (5.3.7).
     /// </summary>
     public sealed class RastgeleDolgu : IDolguKaynagi

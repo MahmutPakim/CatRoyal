@@ -21,10 +21,15 @@ namespace CatRoyal.Cekirdek.Etkiler
     {
         private readonly OyunBaglami _b;
         private readonly Tahta _t;
-        private readonly List<Olay> _olaylar;
+        private List<Olay> _olaylar;
         private readonly SortedDictionary<long, List<Action>> _plan = new SortedDictionary<long, List<Action>>();
         private readonly Dictionary<Konum, int> _yonelinen = new Dictionary<Konum, int>();
         private long _simdi;
+
+        /// <summary>
+        /// Adımlı durulmada (GDD 2.3.9) aynı motor birden çok çağrı boyunca yaşar; her çağrı kendi olay listesini bağlar.
+        /// </summary>
+        internal void OlaylariBagla(List<Olay> olaylar) => _olaylar = olaylar;
 
         public EtkiMotoru(OyunBaglami baglam, List<Olay> olaylar)
         {

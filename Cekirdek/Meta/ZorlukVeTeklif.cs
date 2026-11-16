@@ -32,12 +32,131 @@ namespace CatRoyal.Cekirdek.Meta
         /// <summary>Bölümün deneme sayacı: art arda başarısızlık sayısı (GDD 9.11.1).</summary>
         public int DenemeSayaci(int bolum) => _denemeler.TryGetValue(bolum, out int sayac) ? sayac : 0;
 
-        /// <summary>Her başarısızlıkta bir artar ve bir üst sınırda durur (parametre: deneme_sayaci_azami).</summary>
-        public void BasarisizlikKaydet(int bolum) =>
-            _denemeler[bolum] = Math.Min(_p.TamSayi(MetaParametreAdlari.DenemeSayaciAzami), DenemeSayaci(bolum) + 1);
+        /// <summary>Beceri ölçümünde sayılan toplam deneme (GDD 9.11.3): ölçüm bölümlerindeki kazanım ve başarısızlıklar.</summary>
+        public int OlcumDenemesi { get; private set; }
 
-        /// <summary>Bölüm kazanılınca sıfırlanır.</summary>
-        public void KazanimKaydet(int bolum) => _denemeler.Remove(bolum);
+        /// <summary>Beceri ölçümünde kazanılan bölüm sayısı.</summary>
+        public int OlcumBolumu { get; private set; }
+
+        /// <summary>Ölçülen bölüm başına ortalama deneme; henüz ölçüm bölümü kazanılmadıysa null.</summary>
+        public double? OrtalamaDeneme => OlcumBolumu > 0 ? (double)OlcumDenemesi / OlcumBolumu : (double?)null;
+
+        /// <summary>Her başarısızlıkta bir artar ve bir üst sınırda durur (parametre: deneme_sayaci_azami).</summary>
+        /// <param name="bolum">Bölüm numarası.</param>
+        /// <param name="ilkOynayis">Oyuncu bu bölümü ilk kez mi geçmeye çalışıyor? Yalnızca bunlar beceri ölçümüne girer.</param>
+        public void BasarisizlikKaydet(int bolum, bool ilkOynayis = false)
+        {
+            _denemeler[bolum] = Math.Min(_p.TamSayi(MetaParametreAdlari.DenemeSayaciAzami), DenemeSayaci(bolum) + 1);
+            if (Olculur(bolum, ilkOynayis))
+            {
+                OlcumDenemesi++;
+            }
+        }
+
+        /// <summary>Bölüm kazanılınca deneme sayacı sıfırlanır; ölçüm bölümüyse beceri yeniden hesaplanır.</summary>
+        public void KazanimKaydet(int bolum, bool ilkOynayis = false)
+        {
+            _denemeler.Remove(bolum);
+            if (Olculur(bolum, ilkOynayis))
+            {
+                OlcumDenemesi++;
+                OlcumBolumu++;
+                Beceri = BeceriHesapla(OrtalamaDeneme!.Value);
+            }
+        }
+
+        /// <summary>GDD 9.11.3: beceri ilk bölümlerde ölçülür (parametre: beceri_olcum_son_bolum).</summary>
+        private bool Olculur(int bolum, bool ilkOynayis) =>
+            ilkOynayis && bolum <= _p.TamSayi(MetaParametreAdlari.BeceriOlcumSonBolum);
+
+        /// <summary>
+        /// Bölüm başına ortalama deneme sayısından beceri düzeyi (GDD 9.11.3, 11.2.20).
+        /// parametre: beceri_esikleri serbest metindir (ada özel ayrıştırıcı):
+        /// "≤1.2 usta; ≤1.8 orta; ≤3.0 başlangıç; üstü becerisiz". Eşikler sırayla denenir; ilk uyan düzey seçilir.
+        /// </summary>
+        public BeceriDuzeyi BeceriHesapla(double ortalamaDeneme)
+        {
+            string metin = _p.Metin(MetaParametreAdlari.BeceriEsikleri);
+            foreach (string parca in metin.Split(';'))
+            {
+                string[] kelimeler = parca.Trim().Split(new[] { ' ' }, 2);
+                if (kelimeler.Length != 2)
+                {
+                    throw new ParametreHatasi($"'{MetaParametreAdlari.BeceriEsikleri}' beklenen biçimde değil: '{parca.Trim()}'.");
+                }
+
+                var duzey = DuzeyCoz(kelimeler[1].Trim());
+                if (kelimeler[0] == "üstü")
+                {
+                    return duzey;
+                }
+
+                if (!kelimeler[0].StartsWith("≤", StringComparison.Ordinal)
+                    || !double.TryParse(kelimeler[0].Substring(1), NumberStyles.Float, CultureInfo.InvariantCulture, out double esik))
+                {
+                    throw new ParametreHatasi($"'{MetaParametreAdlari.BeceriEsikleri}': '{kelimeler[0]}' bir eşik değil.");
+                }
+
+                if (ortalamaDeneme <= esik)
+                {
+                    return duzey;
+                }
+            }
+
+            throw new ParametreHatasi($"'{MetaParametreAdlari.BeceriEsikleri}' son düzeyi ('üstü …') vermiyor.");
+        }
+
+        private static BeceriDuzeyi DuzeyCoz(string ad)
+        {
+            switch (ad)
+            {
+                case "usta": return BeceriDuzeyi.Usta;
+                case "orta": return BeceriDuzeyi.Orta;
+                case "başlangıç": return BeceriDuzeyi.Baslangic;
+                case "becerisiz": return BeceriDuzeyi.Becerisiz;
+                default: throw new ParametreHatasi($"'{MetaParametreAdlari.BeceriEsikleri}': bilinmeyen düzey '{ad}'.");
+            }
+        }
+
+        internal Dictionary<string, object?> DurumuYaz()
+        {
+            var denemeler = new Dictionary<string, object?>();
+            foreach (var cift in _denemeler.OrderBy(c => c.Key))
+            {
+                denemeler[cift.Key.ToString(CultureInfo.InvariantCulture)] = cift.Value;
+            }
+
+            return new Dictionary<string, object?>
+            {
+                ["beceri"] = Beceri.ToString(),
+                ["olcum_denemesi"] = OlcumDenemesi,
+                ["olcum_bolumu"] = OlcumBolumu,
+                ["denemeler"] = denemeler,
+            };
+        }
+
+        internal void DurumuYukle(Dictionary<string, object?> d)
+        {
+            if (d.TryGetValue("beceri", out object? beceri)
+                && Enum.TryParse(beceri as string, out BeceriDuzeyi duzey)
+                && Enum.IsDefined(typeof(BeceriDuzeyi), duzey))
+            {
+                Beceri = duzey;
+            }
+
+            OlcumBolumu = Math.Max(0, KayitAlani.TamSayi(d, "olcum_bolumu", 0));
+            OlcumDenemesi = Math.Max(OlcumBolumu, KayitAlani.TamSayi(d, "olcum_denemesi", 0));
+            _denemeler.Clear();
+            int azami = _p.TamSayi(MetaParametreAdlari.DenemeSayaciAzami);
+            foreach (var cift in KayitAlani.Nesne(d, "denemeler"))
+            {
+                if (int.TryParse(cift.Key, NumberStyles.None, CultureInfo.InvariantCulture, out int bolum))
+                {
+                    int sayac = Math.Max(0, Math.Min(azami, KayitAlani.TamSayi(cift.Value, cift.Key)));
+                    if (sayac > 0) _denemeler[bolum] = sayac;
+                }
+            }
+        }
 
         /// <summary>
         /// GDD 9.11.5: zorluk ağırlıklı üretecin ağırlığı; bölümün zorluk etiketi ve oyuncu becerisi belirler.

@@ -39,48 +39,94 @@ namespace CatRoyal.Cekirdek.Bolum
     /// </summary>
     public sealed class HedefTakibi
     {
-        private readonly Dictionary<string, int> _kalan = new Dictionary<string, int>(StringComparer.Ordinal);
-        private readonly List<string> _sira = new List<string>();
+        private sealed class Sayac
+        {
+            public Sayac(Hedef hedef) => Hedef = hedef;
+
+            public Hedef Hedef { get; }
+            public int Kalan { get; set; }
+
+            /// <summary>Adet 0 ise sayı, hedefin ekranı açıldığında tahtadan sayılır (GDD 7.1.2 d).</summary>
+            public bool Cozuldu { get; set; }
+        }
+
+        private readonly List<Sayac> _sayaclar = new List<Sayac>();
         private bool _kazanmaBildirildi;
 
         public HedefTakibi(IEnumerable<Hedef> hedefler, Tahta tahta)
         {
             foreach (var hedef in hedefler)
             {
-                if (_kalan.ContainsKey(hedef.Tur))
+                if (hedef.Ekran < 1)
                 {
-                    throw new ArgumentException($"'{hedef.Tur}' hedefi birden fazla kez verildi.");
+                    throw new ArgumentException($"'{hedef.Tur}' hedefinin ekran numarası 1'den küçük olamaz.");
                 }
 
-                // GDD 7.1.2 (d): adet 0 ise o türün tahtadaki bütün örnekleri hedeftir.
-                _kalan.Add(hedef.Tur, hedef.Adet > 0 ? hedef.Adet : TahtadakiAdet(tahta, hedef.Tur));
-                _sira.Add(hedef.Tur);
+                if (_sayaclar.Any(s => s.Hedef.Tur == hedef.Tur && s.Hedef.Ekran == hedef.Ekran))
+                {
+                    throw new ArgumentException($"'{hedef.Tur}' hedefi aynı ekranda birden fazla kez verildi.");
+                }
+
+                _sayaclar.Add(new Sayac(hedef) { Kalan = hedef.Adet, Cozuldu = hedef.Adet > 0 });
             }
+
+            EkraniCoz(tahta);
         }
 
-        /// <summary>Hedef türleri, bölüm verisindeki sırayla.</summary>
-        public IReadOnlyList<string> Turler => _sira;
+        /// <summary>Oynanan ekran (GDD 2.1.7, 8.9.1); tek ekranlı bölümde hep 1.</summary>
+        public int GecerliEkran { get; private set; } = 1;
 
-        public bool HedefVar => _sira.Count > 0;
+        /// <summary>Hedef taşıyan en yüksek ekran numarası.</summary>
+        public int SonEkran => _sayaclar.Count == 0 ? 1 : _sayaclar.Max(s => s.Hedef.Ekran);
 
-        /// <summary>Bütün hedefler tamamlandı mı (GDD 7.3.1)? Hedefi olmayan bölüm tamamlanmış sayılmaz.</summary>
-        public bool HepsiTamam => HedefVar && _kalan.Values.All(kalan => kalan == 0);
+        private IEnumerable<Sayac> Gecerli => _sayaclar.Where(s => s.Hedef.Ekran == GecerliEkran);
 
-        public int Kalan(string tur) => _kalan.TryGetValue(tur, out int kalan) ? kalan : 0;
+        /// <summary>Geçerli ekranın hedef türleri, bölüm verisindeki sırayla.</summary>
+        public IReadOnlyList<string> Turler => Gecerli.Select(s => s.Hedef.Tur).ToList();
+
+        public bool HedefVar => _sayaclar.Count > 0;
+
+        /// <summary>Bütün ekranların hedefleri tamamlandı mı (GDD 7.3.1)? Hedefi olmayan bölüm tamamlanmış sayılmaz.</summary>
+        public bool HepsiTamam => HedefVar && _sayaclar.All(s => s.Cozuldu && s.Kalan == 0);
+
+        /// <summary>Geçerli ekranın hedefleri tamamlandı mı (GDD 8.9.1)?</summary>
+        public bool EkranTamam => Gecerli.Any() && Gecerli.All(s => s.Kalan == 0);
+
+        /// <summary>Geçerli ekrandaki hedefin kalan adedi.</summary>
+        public int Kalan(string tur) => Gecerli.FirstOrDefault(s => s.Hedef.Tur == tur)?.Kalan ?? 0;
+
+        /// <summary>GDD 8.9.1: bir sonraki ekrana geçilir; o ekranın "hepsi" hedefleri yeni tahtadan sayılır.</summary>
+        public void SonrakiEkranaGec(Tahta tahta)
+        {
+            GecerliEkran++;
+            EkraniCoz(tahta);
+        }
+
+        private void EkraniCoz(Tahta tahta)
+        {
+            foreach (var sayac in Gecerli.Where(s => !s.Cozuldu))
+            {
+                // GDD 7.1.2 (d): adet 0 ise o türün tahtadaki bütün örnekleri hedeftir.
+                sayac.Kalan = TahtadakiAdet(tahta, sayac.Hedef.Tur);
+                sayac.Cozuldu = true;
+            }
+        }
 
         /// <summary>
         /// Bir öğe kırıldı, toplandı ya da patladı. Sayaç 0'ın altına inmez; hedefi tamamlanmış türün kalan
         /// örnekleri yine kırılabilir (GDD 7.1.4). Sayaç güncellenince bütün hedefler tamamlandıysa kazanma başlar (7.3.1).
+        /// Yalnız geçerli ekranın hedefleri sayılır (2.1.7).
         /// </summary>
         public void Say(string? tur, List<Olay> olaylar)
         {
-            if (tur == null || !_kalan.TryGetValue(tur, out int kalan) || kalan == 0)
+            var sayac = tur == null ? null : Gecerli.FirstOrDefault(s => s.Hedef.Tur == tur);
+            if (sayac == null || sayac.Kalan == 0)
             {
                 return;
             }
 
-            _kalan[tur] = kalan - 1;
-            olaylar.Add(new HedefIlerledi(tur, kalan - 1));
+            sayac.Kalan--;
+            olaylar.Add(new HedefIlerledi(sayac.Hedef.Tur, sayac.Kalan));
 
             if (HepsiTamam && !_kazanmaBildirildi)
             {

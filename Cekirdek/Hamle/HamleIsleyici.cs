@@ -40,6 +40,12 @@ namespace CatRoyal.Cekirdek.Hamle
 
         /// <summary>Tam akış (5.7 adım 1–9): durulunca olası hamle yoksa karıştırma.</summary>
         Tam,
+
+        /// <summary>
+        /// Yalnızca hamlenin kendi dalgası; durulma çağıranın adımlarıyla sürer (GDD 2.3.9). Bekleyen renk küreleri
+        /// ve yayılmalar verilen motorda kalır.
+        /// </summary>
+        Adimli,
     }
 
     /// <summary>
@@ -65,7 +71,8 @@ namespace CatRoyal.Cekirdek.Hamle
             Konum gidilen,
             List<Olay> olaylar,
             HamleKapsami kapsam = HamleKapsami.Tam,
-            System.Action? gecerliOlunca = null)
+            System.Action? gecerliOlunca = null,
+            EtkiMotoru? surenMotor = null)
         {
             var tahta = baglam.Tahta;
 
@@ -81,7 +88,7 @@ namespace CatRoyal.Cekirdek.Hamle
             var hedef = tahta[gidilen];
             var suruklenen = kaynak.Tas!;
             var diger = hedef.Tas!;
-            var motor = new EtkiMotoru(baglam, olaylar);
+            var motor = surenMotor ?? new EtkiMotoru(baglam, olaylar);
 
             YerDegistir(kaynak, hedef);
 
@@ -145,7 +152,8 @@ namespace CatRoyal.Cekirdek.Hamle
             Konum konum,
             List<Olay> olaylar,
             HamleKapsami kapsam = HamleKapsami.Tam,
-            System.Action? gecerliOlunca = null)
+            System.Action? gecerliOlunca = null,
+            EtkiMotoru? surenMotor = null)
         {
             var tahta = baglam.Tahta;
             var tas = tahta.TasAl(konum);
@@ -161,7 +169,7 @@ namespace CatRoyal.Cekirdek.Hamle
                 return HamleSonucu.Imkansiz;
             }
 
-            var motor = new EtkiMotoru(baglam, olaylar);
+            var motor = surenMotor ?? new EtkiMotoru(baglam, olaylar);
 
             // GDD 2.3.6: hedefleyecek taşı olmayan renk küresine dokunmak hiçbir şey yapmaz, hamle sayılmaz.
             if (tas.Tur == TasTuru.RenkKuresi && !motor.EnYayginRenk().HasValue)
@@ -196,6 +204,12 @@ namespace CatRoyal.Cekirdek.Hamle
         /// </summary>
         private static void HamleyiBitir(OyunBaglami baglam, EtkiMotoru motor, List<Olay> olaylar, HamleKapsami kapsam)
         {
+            if (kapsam == HamleKapsami.Adimli)
+            {
+                motor.DalgayiBitir();
+                return;
+            }
+
             TahtaDongusu.Durult(baglam, motor, olaylar, dusme: kapsam != HamleKapsami.YalnizPatlama);
             if (kapsam == HamleKapsami.Tam)
             {

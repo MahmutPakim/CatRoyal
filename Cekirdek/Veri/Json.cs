@@ -31,6 +31,94 @@ namespace CatRoyal.Cekirdek.Veri
             return deger;
         }
 
+        /// <summary>
+        /// Değeri JSON metnine çevirir. Nesne → IDictionary&lt;string, object?&gt; (anahtar sırası korunur), dizi →
+        /// IEnumerable, sayı → int/long/double, metin → string, bool, null. <see cref="Ayristir"/> ile çift yönlüdür.
+        /// </summary>
+        public static string Yaz(object? deger)
+        {
+            var metin = new StringBuilder();
+            DegerYaz(metin, deger);
+            return metin.ToString();
+        }
+
+        private static void DegerYaz(StringBuilder m, object? deger)
+        {
+            switch (deger)
+            {
+                case null: m.Append("null"); break;
+                case string s: MetinYaz(m, s); break;
+                case bool b: m.Append(b ? "true" : "false"); break;
+                case int i: m.Append(i.ToString(CultureInfo.InvariantCulture)); break;
+                case long l: m.Append(l.ToString(CultureInfo.InvariantCulture)); break;
+                case double d:
+                    if (double.IsNaN(d) || double.IsInfinity(d))
+                    {
+                        throw new JsonHatasi("JSON: sonsuz ya da sayı olmayan değer yazılamaz.");
+                    }
+
+                    m.Append(d.ToString("R", CultureInfo.InvariantCulture));
+                    break;
+                case IDictionary<string, object?> nesne:
+                    m.Append('{');
+                    bool ilk = true;
+                    foreach (var cift in nesne)
+                    {
+                        if (!ilk) m.Append(',');
+                        ilk = false;
+                        MetinYaz(m, cift.Key);
+                        m.Append(':');
+                        DegerYaz(m, cift.Value);
+                    }
+
+                    m.Append('}');
+                    break;
+                case System.Collections.IEnumerable dizi:
+                    m.Append('[');
+                    bool ilkOge = true;
+                    foreach (object? oge in dizi)
+                    {
+                        if (!ilkOge) m.Append(',');
+                        ilkOge = false;
+                        DegerYaz(m, oge);
+                    }
+
+                    m.Append(']');
+                    break;
+                default:
+                    throw new JsonHatasi($"JSON: '{deger.GetType().Name}' türü yazılamaz.");
+            }
+        }
+
+        private static void MetinYaz(StringBuilder m, string s)
+        {
+            m.Append('"');
+            foreach (char c in s)
+            {
+                switch (c)
+                {
+                    case '"': m.Append("\\\""); break;
+                    case '\\': m.Append("\\\\"); break;
+                    case '\n': m.Append("\\n"); break;
+                    case '\r': m.Append("\\r"); break;
+                    case '\t': m.Append("\\t"); break;
+                    default:
+                        if (c < ' ')
+                        {
+                            m.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
+                        }
+                        else
+                        {
+                            m.Append(c);
+                        }
+
+                        break;
+                }
+            }
+
+            m.Append('"');
+        }
+
         private static object? DegerOku(string s, ref int i)
         {
             BosluklariGec(s, ref i);

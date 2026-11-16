@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cekirdek", "Cekirdek\Cekird
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cekirdek.Testler", "Cekirdek.Testler\Cekirdek.Testler.csproj", "{41F6BCAC-3977-422B-B714-07B9A1111090}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Araclar", "Araclar", "{6835DB55-9418-4D18-8DFA-A7D4C4E0F1CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BolumDogrula", "Araclar\BolumDogrula\BolumDogrula.csproj", "{1E7F24A1-75C9-486F-AD57-20E302EF75AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,12 @@ Global
 		{41F6BCAC-3977-422B-B714-07B9A1111090}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41F6BCAC-3977-422B-B714-07B9A1111090}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41F6BCAC-3977-422B-B714-07B9A1111090}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E7F24A1-75C9-486F-AD57-20E302EF75AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E7F24A1-75C9-486F-AD57-20E302EF75AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E7F24A1-75C9-486F-AD57-20E302EF75AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E7F24A1-75C9-486F-AD57-20E302EF75AF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1E7F24A1-75C9-486F-AD57-20E302EF75AF} = {6835DB55-9418-4D18-8DFA-A7D4C4E0F1CF}
 	EndGlobalSection
 EndGlobal

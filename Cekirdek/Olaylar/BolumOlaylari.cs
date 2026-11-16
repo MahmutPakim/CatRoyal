@@ -218,4 +218,43 @@ namespace CatRoyal.Cekirdek.Olaylar
         public Konum Konum { get; }
         public Tas Tas { get; }
     }
+
+    /// <summary>
+    /// Çok ekranlı bölümde bir sonraki ekrana geçildi (GDD 8.9.1). Bundan sonraki olayların konumları yeni
+    /// ekranın tahtasına göredir; satır 1 o ekranın en üst satırıdır.
+    /// </summary>
+    public sealed class EkranDegisti : Olay
+    {
+        public EkranDegisti(int ekran, int aktarilanTas)
+        {
+            Ekran = ekran;
+            AktarilanTas = aktarilanTas;
+        }
+
+        public int Ekran { get; }
+
+        /// <summary>Üst ekrandan alt ekranın giriş sırasına eklenen taş sayısı (GDD 8.9.2).</summary>
+        public int AktarilanTas { get; }
+    }
+
+    /// <summary>Artan hamle gösterisi başladı (GDD 7.6.2): kalan hamle kadar normal taş çizgi taşına dönüşecek.</summary>
+    public sealed class ArtanHamleGosterisiBasladi : Olay
+    {
+        public ArtanHamleGosterisiBasladi(int kalanHamle) => KalanHamle = kalanHamle;
+
+        public int KalanHamle { get; }
+    }
+
+    /// <summary>Gösteri bitti ya da atlandı (GDD 7.6.3); kalan hamleyi puan olarak kullanan olaylar bunu dinler (10.1.6).</summary>
+    public sealed class ArtanHamlelerBitti : Olay
+    {
+        public ArtanHamlelerBitti(int kalanHamle, bool atlandi)
+        {
+            KalanHamle = kalanHamle;
+            Atlandi = atlandi;
+        }
+
+        public int KalanHamle { get; }
+        public bool Atlandi { get; }
+    }
 }

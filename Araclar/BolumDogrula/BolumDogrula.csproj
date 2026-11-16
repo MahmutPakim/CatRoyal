@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Bölüm doğrulayıcının komut satırı aracı (GDD 8). Kullanımı docs/yol_haritasi.md, Aşama 2 altında. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CatRoyal.Araclar</RootNamespace>
+    <AssemblyName>BolumDogrula</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Cekirdek\Cekirdek.csproj" />
+  </ItemGroup>
+</Project>

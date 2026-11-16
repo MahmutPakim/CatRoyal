@@ -82,6 +82,9 @@ namespace CatRoyal.Cekirdek.Meta
             return true;
         }
 
+        /// <summary>Kayıttan yükleme: olay tetiklemez, harcama kaydı oluşturmaz.</summary>
+        internal void BakiyeyiYukle(int bakiye) => Bakiye = Math.Max(0, bakiye);
+
         /// <summary>GDD 9.2.8: sunucu değeri yerel değerin üzerine yazabilir.</summary>
         public void SunucuylaEsitle(int sunucuBakiyesi)
         {

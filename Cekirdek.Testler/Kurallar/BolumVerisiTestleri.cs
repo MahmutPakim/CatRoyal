@@ -55,7 +55,7 @@ namespace CatRoyal.Cekirdek.Testler.Kurallar
                 var tahta = oturum.Baglam.Tahta;
 
                 Assert.That(tahta.SutunSayisi, Is.EqualTo(veri.Genislik));
-                Assert.That(tahta.SatirSayisi, Is.EqualTo(veri.Yukseklik));
+                Assert.That(tahta.SatirSayisi, Is.EqualTo(veri.Ekranlar[0].Yukseklik), "Çok ekranlı bölümde ilk ekran oynanır (GDD 2.1.7).");
                 Assert.That(oturum.Durum, Is.EqualTo(BolumDurumu.Oynaniyor), $"tohum {tohum}");
                 Assert.That(oturum.KalanHamle, Is.EqualTo(veri.Hamle));
                 Assert.That(OlasiHamleBulucu.HazirEslesmeVar(tahta), Is.False, $"tohum {tohum}");

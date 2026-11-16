@@ -1,0 +1,33 @@
+{
+  "kimlik": 6,
+  "surum": 1,
+  "genislik": 7,
+  "yukseklik": 14,
+  "hamle": 30,
+  "renkler": 4,
+  "bayraklar": { "cokEkranli": true },
+  "ekranlar": [[1, 7], [8, 14]],
+  "engeller": {
+    "kb": { "arketip": "katmanli_blok", "hedefTuru": "katmanli_blok" }
+  },
+  "hucreler": [
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "_    _    _    _    _    _    _",
+    "_    _    _    _    _    _    _",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "?    ?    ?    ?    ?    ?    ?",
+    "kb:1 ?    kb:2 ?    kb:2 ?    kb:1",
+    "kb:1 kb:1 kb:1 kb:1 kb:1 kb:1 kb:1"
+  ],
+  "hedefler": [
+    { "tur": "renk:0", "adet": 10, "ekran": 1 },
+    { "tur": "katmanli_blok", "adet": 0, "ekran": 2 }
+  ]
+}
